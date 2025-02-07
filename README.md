@@ -6,7 +6,7 @@ To use this program, clone the repository, and run main.sh. This will bring up t
 
 #### Roadmap:
  - [ ] Basic Functionality
-     - [ ] Render a sudoku board
+     - [x] Render a sudoku board
      - [ ] Assign numbers to individual cells, and store them in memory
      - [ ] Build UI buttons
      - [ ] Implement algorithm to check sudoku correctness
