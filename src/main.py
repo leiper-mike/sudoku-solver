@@ -1,8 +1,10 @@
 from window import Window
 from board import Board
+from tkinter import Tk
 def main():
-     win = Window(800,600)
-     board = Board(5,5,30,30,win)
+     root = Tk()
+     win = Window(800,600, root)
+     board = Board(5,5,30,30,win.canvas)
      board.draw()
-     win.wait_for_close()
+     root.mainloop()
 main()
