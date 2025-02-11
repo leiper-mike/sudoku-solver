@@ -42,10 +42,16 @@ class Cell():
                if self.textID:
                     self.delNum(canvas)
                self.textID = canvas.create_text((self.x1 + self.x2) /2, (self.y1 + self.y2) / 2, text=f"{self.num}")
-               self.possible = [-1]
+               
           
      def delNum(self, canvas) -> None:
           if self.textID:
                canvas.delete(self.textID)
                self.textID = None
                self.possible = [1,2,3,4,5,6,7,8,9]
+               
+     def setNum(self,num):
+          self.num = num
+          self.possible = [-1]
+     #make set num func, set num and set possible to -1
+     

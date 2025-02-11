@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk
-from board import Board
+from src.board import Board
 class Window():
      def __init__(self, root: Tk) -> None:
           self.selectedNumDisplay = StringVar(value="Selected: 1")
@@ -19,7 +19,9 @@ class Window():
           self.canvasFrame.grid(column=0,row=0, sticky= (W))
           self.board = Board(self.canvasFrame, width=300, height=300)
           self.board.grid(column=0, row=0)
-          self.board.setupAndDrawCells()
+          self.board.setupCells()
+          self.board.setupSudoku()
+          self.board.drawCells()
      def setupOptions(self) -> None:
           self.optionsFrame = ttk.Frame(self.mainFrame, padding="4 4 4 4")
           self.optionsFrame.grid(column=0,row=1, sticky=(N,W))
