@@ -51,7 +51,8 @@ class Cell():
                self.possible = [1,2,3,4,5,6,7,8,9]
                
      def setNum(self,num):
+          """Sets the num variable equal to num, and removes all possibilities. If -1 is inputted, does not remove all possibilities"""
           self.num = num
-          self.possible = [-1]
-     #make set num func, set num and set possible to -1
+          if self.num != -1:
+               self.possible = [-1]
      

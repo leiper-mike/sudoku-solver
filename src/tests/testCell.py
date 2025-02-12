@@ -35,6 +35,10 @@ class TestCell(unittest.TestCase):
           cell.setNum(5)
           self.assertListEqual(cell.possible,[-1])
           self.assertEqual(cell.num,5)
-
+     def testSetNegativeOneNum(self):
+          cell = Cell((1,1),(2,2))
+          cell.setNum(-1)
+          self.assertListEqual(cell.possible,[1,2,3,4,5,6,7,8,9])
+          self.assertEqual(cell.num,-1)
 if __name__ == "__main__":
      unittest.main()

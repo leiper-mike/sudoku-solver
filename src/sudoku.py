@@ -17,28 +17,30 @@ class Sudoku():
                     return False
           return True
      def naive(self) -> None:
-          stuck = False
-          while not self.check() and not stuck:
+          changed = True
+          while not self.check() and changed:
                #blocks any numbers that have been placed
-               blockStuck = self.blockAll()
-               singleStuck = self.nakedSingle()
-               hiddenStuck = self.hiddenSingle()
+               blockChanged = self.blockAll()
+               singleChanged = self.nakedSingle()
+               hiddenChanged = self.hiddenSingle()
                # if any of the strategies have done anything this iteration, we're not stuck
-               stuck = blockStuck and singleStuck and hiddenStuck
+               changed =  blockChanged or singleChanged or hiddenChanged
           return self.cells
      def nakedSingle(self) -> bool:
           """Iterates over every cell, if they only have one possible value, sets the cell to that and draws the num"""
-          stuck = True
+          changed = False
           for i in range(0,9):
                for j in range(0,9):
                     c = self.cells[i][j]
                     if not -1 in c.possible and len(c.possible) == 1:
                          c.setNum(c.possible[0])
-                         stuck = False
-          return stuck
+                         changed = True
+          return changed
      def hiddenSingle(self) -> bool:
           """Iterates over every row, column and box, if there is only one cell that has a possiblity for a given number (even if that cell has other possiblities), set it to that"""
-          stuck = True
+          #TODO:
+          #either find a way to stop the same cell being accessed after it has been assigned, or split row/col/box to run in series not parallel
+          changed = True
           for i in range(0,9):
                row = self.getRow(i)
                col = self.getCol(i)
@@ -56,18 +58,22 @@ class Sudoku():
                               colPossible[k].append(j)
                          if k in box[j].possible:
                               boxPossible[k].append(j)
+               #print(f"i: {i} rowPossible: {rowPossible}, colPossible: {colPossible}, boxPossible: {boxPossible}")
                #if there is only one possiblity for a given number in the row/col/box, find the cell that has that possibility and set it to the number
                for l in range(1,10):
                     if len(rowPossible[l]) == 1:
                          row[rowPossible[l][0]].setNum(l)
-                         stuck = False
+                         print(f"row #{i+1}, col#{rowPossible[l][0]+1} set to: {l}")
+                         changed = True
                     if len(colPossible[l]) == 1:
                          col[colPossible[l][0]].setNum(l)
-                         stuck = False
+                         print(f"col#{i+1}, row #{colPossible[l][0]+1} set to: {l}")
+                         changed = True
                     if len(boxPossible[l]) == 1:
                          box[boxPossible[l][0]].setNum(l)
-                         stuck = False
-          return stuck
+                         print(f"item#{boxPossible[l][0]+1}, in box{i+1} set to: {l}")
+                         changed = True
+          return changed
      def nakedPairs(self) -> bool:
           """Iterates over every box, if there is a pair of cells in a row/col that have only the same two possiblities, remove possiblities of them from the box and row/col respectively"""
           stuck = True
@@ -133,27 +139,27 @@ class Sudoku():
                     stuck = False
           return stuck
      def hiddenPairs(self) -> bool:
-               stuck = True
+               changed = False
                
 
-               return stuck
+               return changed
      def virtualPairs(self) -> bool:
-          stuck = True
+          changed = False
           
 
-          return stuck
+          return changed
      def blockAll(self) -> bool:
           """Iterates over board, calling self.block() on any cells that haven't blocked yet and have a value"""
-          stuck = True
+          c = False
           for i in range(0,9):
                for j in range(0,9):
                     c = self.cells[i][j]
                     if c.num > 0 and not c.hasBlocked:
-                         changed = self.block(i,j)
+                         changed = self.block(i,j,c.num)
                          c.hasBlocked = True
                          if changed:
-                              stuck = False
-          return stuck          
+                              c = True
+          return c         
      def block(self, i, j, num, row = True, col = True, box = True) -> bool:
           """Removes the input num from the list of possible numbers in the column, row, and box of the input coordinate"""
           r = None
@@ -167,40 +173,22 @@ class Sudoku():
                b = self.getBoxFromPos(i,j)
           changed = False
           for k in range(0,9):
-               if row and num in row[k].possible:
-                    row[k].possible.remove(num)
+               if row and num in r[k].possible:
+                    r[k].possible.remove(num)
                     changed = True
-               if col and num in col[k].possible:
-                    col[k].possible.remove(num)
+               if col and num in c[k].possible:
+                    c[k].possible.remove(num)
                     changed = True
-               if box and num in box[k].possible:
-                    box[k].possible.remove(num)
+               if box and num in b[k].possible:
+                    b[k].possible.remove(num)
                     changed = True
           return changed
      def blockMultiple(self, i, j, nums:list[int], row = True, col = True, box = True) -> bool:
-          """Removes the input num from the list of possible numbers in the column, row, and box of the input coordinate"""
-          r = None
-          if row:
-               r = self.getRow(i)
-          c = None
-          if col:
-               c = self.getCol(j)
-          b = None
-          if box:
-               b = self.getBoxFromPos(i,j)
-          changed = False
-          for k in range(0,9):
-               for n in nums:
-                    if row and n in row[k].possible:
-                         row[k].possible.remove(n)
-                         changed = True
-                    if col and n in col[k].possible:
-                         col[k].possible.remove(n)
-                         changed = True
-                    if box and n in box[k].possible:
-                         box[k].possible.remove(n)
-                         changed = True
-          return changed
+          """Removes the input nums from the list of possible numbers in the column, row, and box of the input coordinate"""
+          ret = []
+          for n in nums:
+               ret.append(self.block(i,j,n,row,col,box))
+          return True in ret
      def getCol(self, index:int) -> list[Cell]:
           """Returns a list of cells at the given column index"""              
           ret = []
@@ -235,3 +223,13 @@ class Sudoku():
           return ret
      def updateSudoku(self, cells:list[list[Cell]]) -> None:
           self.cells = cells
+     def getAllPossibles(self) -> list[list[list[int]]]:
+          ret = []
+          for i in range(0,9):
+               ret.append([])
+               for j in range(0,9):
+                    ret[i].append(self.cells[i][j].possible)
+          return ret
+     
+     #TODO: 
+     #solving functions should return a list of moves made, for displaying to user
