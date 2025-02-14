@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import ttk
-from src.board import Board
+from board import Board
 class Window():
      def __init__(self, root: Tk) -> None:
           self.selectedNumDisplay = StringVar(value="Selected: 1")
@@ -12,6 +12,7 @@ class Window():
           self.algorithm = 0
           root.columnconfigure(0, weight=1)
           root.rowconfigure(0, weight=1)
+          self.setupNums()
           self.setupBoard()
           self.setupOptions()
      def setupBoard(self) -> None:
@@ -19,6 +20,8 @@ class Window():
           self.canvasFrame.grid(column=0,row=0, sticky= (W))
           self.board = Board(self.canvasFrame, width=300, height=300)
           self.board.grid(column=0, row=0)
+          ttk.Button(self.canvasFrame, text="Clear", command= self.clear).grid(column=1, row=0)
+          ttk.Button(self.canvasFrame, text="Generate Candidates", command= self.generate).grid(column=1, row=1)
           self.board.setupCells()
           self.board.setupSudoku()
           self.board.drawCells()
@@ -51,7 +54,29 @@ class Window():
           ttk.Button(algorithmFrame, text="Super Duper Expert", command=lambda: self.setAlgo(3),width= 15).grid(column = 3, row = 1,sticky=(N,W))
           ttk.Button(algorithmFrame, text="Solve!", command=lambda: self.solve()).grid(column = 4,row=0)
           ttk.Button(algorithmFrame, text="Check!", command=lambda: self.check()).grid(column = 4,row=1)
-
+     def setupNums(self):
+          self.root.bind("0", lambda e: self.setNum(-1))
+          self.root.bind("1", lambda e: self.setNum(1))
+          self.root.bind("2", lambda e: self.setNum(2))
+          self.root.bind("3", lambda e:  self.setNum(3))
+          self.root.bind("4", lambda e: self.setNum(4))
+          self.root.bind("5", lambda e: self.setNum(5))
+          self.root.bind("6", lambda e: self.setNum(6))
+          self.root.bind("7", lambda e: self.setNum(7))
+          self.root.bind("8", lambda e: self.setNum(8))
+          self.root.bind("9", lambda e: self.setNum(9))
+          self.root.bind("KP_0", lambda e: self.setNum(-1))
+          self.root.bind("KP_1", lambda e: self.setNum(1))
+          self.root.bind("KP_2", lambda e: self.setNum(2))
+          self.root.bind("KP_3", lambda e: self.setNum(3))
+          self.root.bind("KP_4", lambda e: self.setNum(4))
+          self.root.bind("KP_5", lambda e: self.setNum(5))
+          self.root.bind("KP_6", lambda e: self.setNum(6))
+          self.root.bind("KP_7", lambda e: self.setNum(7))
+          self.root.bind("KP_8", lambda e: self.setNum(8))
+          self.root.bind("KP_9", lambda e:  self.setNum(9))
+     def generate(self):
+          self.board.generatePossible()
      def setNum(self, num:int) -> None:
           self.board.num = num
           if num == -1:
@@ -65,7 +90,9 @@ class Window():
                case 0:
                     return self.board.naive()
                case 1:
-                    pass
+                    #for testing
+                    return self.board.test()
+
                case 2:
                     pass
                case 3:
@@ -84,9 +111,10 @@ class Window():
           else:
                statusText = "Failed" + statusText
           ttk.Label(frame,text=statusText).grid(column=0,row=0)
-     
+     def clear(self) -> None:
+          return self.board.clear()
+
      #TODO:
-     #pressing number button sets a variable in window to the num
      # add copy paste ability from some format of numbers
-     # could seperate out all the sudoku related functions into a seperate file and class, 
-     # pass it in a 2d array reresentation of board, then worry about changing cells, avoids bloating board class
+     # pass sudoku a 2d array reresentation of board, then worry about changing cells, avoids bloating board class
+     # clear button
