@@ -1,4 +1,4 @@
-from src.window import Window
+from window import Window
 from tkinter import Tk
 def main():
      root = Tk()

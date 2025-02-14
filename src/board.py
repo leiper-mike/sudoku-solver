@@ -1,7 +1,7 @@
-from src.cell import Cell, LineType
+from cell import Cell, LineType
 from tkinter import *
 from tkinter import ttk
-from src.sudoku import Sudoku
+from sudoku import Sudoku
 import math
 class Board(Canvas):
      def __init__(self, parent, lineColor:str = "black", **kwargs)-> None:
@@ -13,8 +13,9 @@ class Board(Canvas):
           self.cellSizeY = 30
           self.lineColor = lineColor
           self.num = 1
-          self.cells = []                        
-                         
+          self.cells = []
+          self.setupSudoku()
+          self.actions = []           
      def addNum(self, event) -> None:
           """Handles a click event on the canvas, and renders a number in the center of the cell that was clicked. If the number is -1, deletes the number in the cell."""
           x,y = event.x, event.y
@@ -22,14 +23,14 @@ class Board(Canvas):
                xindex = math.floor((x-self.xOffset)/self.cellSizeX)
                yindex = math.floor((y-self.yOffset)/self.cellSizeY)
                try:
-                    self.cells[yindex][xindex].num = self.num
+                    self.cells[yindex][xindex].setNum(self.num)
                     if self.num == -1:
                          self.cells[yindex][xindex].delNum(self)
                     else:
                          self.cells[yindex][xindex].drawNum(self)
                except IndexError:
                     return
-
+     
 
      def setupCells(self) -> None:
           """Creates a 2d array of cell objects, determines whether to bold a line edge of the cell depending on if it is on the edge of a box"""
@@ -67,7 +68,43 @@ class Board(Canvas):
           self.sudoku.updateSudoku(self.cells)
           return self.sudoku.check()
      def naive(self) -> None:
-          self.cells = self.sudoku.naive()
+          self.actions = self.sudoku.naive()
+          self.updateNums()
      def setupSudoku(self) -> None:
           self.sudoku = Sudoku(self.cells)
-     
+
+     def generatePossible(self):
+          self.sudoku.blockAll()
+          for i in range(0,9):
+               for j in range(0,9):
+                    self.sudoku.cells[i][j].drawPossible(self)
+     def updateNums(self) -> None:
+          """Draws the number for each cell in the board object"""
+          for i in range(0,9):
+               for j in range(0,9):
+                    self.cells[i][j].drawNum(self)
+     def clear(self) -> None:
+          for i in range(0,9):
+               for j in range(0,9):
+                    self.cells[i][j].delNum()
+                    self.cells[i][j].erasePossible(self)
+                    self.cells[i][j].eraseNum(self)
+          self.sudoku.updateSudoku(self.cells)
+     def test(self):
+          nums = [
+               [-1,-1, 2,   3,-1,7,  1,-1,-1],
+               [-1, 5, 1,   8,9, 4,  2, 7,-1],
+               [-1,-1,-1,  -1,5,-1, -1,-1,-1],
+
+               [ 2,8, -1,  -1,-1,-1,  -1,3,1],
+               [ -1, 1,6,  -1,-1,-1,   9,2,-1],
+               [ 3,7, -1,  -1,-1,-1,  -1,6,5],
+
+               [-1,-1,-1,  -1,8, -1,  -1,-1,-1],
+               [-1, 2, 8,   7,3,  9,  5,4,-1],
+               [-1,-1, 3,   6,-1, 2,  8,-1,-1],
+          ]
+          for i in range(0,9):
+               for j in range(0,9):
+                    self.cells[i][j].setNum(nums[i][j])
+          return self.naive()
