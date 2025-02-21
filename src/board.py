@@ -25,7 +25,8 @@ class Board(Canvas):
                try:
                     self.cells[yindex][xindex].setNum(self.num)
                     if self.num == -1:
-                         self.cells[yindex][xindex].delNum(self)
+                         self.cells[yindex][xindex].delNum()
+                         self.cells[yindex][xindex].eraseNum(self)
                     else:
                          self.cells[yindex][xindex].drawNum(self)
                except IndexError:
@@ -70,6 +71,9 @@ class Board(Canvas):
      def naive(self) -> None:
           self.actions = self.sudoku.naive()
           self.updateNums()
+     def advanced(self) -> None:
+          self.actions = self.sudoku.advanced()
+          self.updateNums()
      def setupSudoku(self) -> None:
           self.sudoku = Sudoku(self.cells)
 
@@ -92,19 +96,20 @@ class Board(Canvas):
           self.sudoku.updateSudoku(self.cells)
      def test(self):
           nums = [
-               [-1,-1, 2,   3,-1,7,  1,-1,-1],
-               [-1, 5, 1,   8,9, 4,  2, 7,-1],
-               [-1,-1,-1,  -1,5,-1, -1,-1,-1],
+               [1,-1, -1,   6,7,-1,   -1,-1, 2],
+               [5, 7, 3,    1, 9, 2,  -1, 6,-1],
+               [-1,-1,-1,  -1, 4,-1,  -1,-1, 7],
 
-               [ 2,8, -1,  -1,-1,-1,  -1,3,1],
-               [ -1, 1,6,  -1,-1,-1,   9,2,-1],
-               [ 3,7, -1,  -1,-1,-1,  -1,6,5],
+               [ -1,8, -1,  9,-1,-1,  3,-1,-1],
+               [ -1,-1,-1, -1,-1,-1,  -1,-1,-1],
+               [ 4,-1, -1, -1, 3,-1,  7,8, -1],
 
-               [-1,-1,-1,  -1,8, -1,  -1,-1,-1],
-               [-1, 2, 8,   7,3,  9,  5,4,-1],
-               [-1,-1, 3,   6,-1, 2,  8,-1,-1],
+               [-1,-1,-1,  -1,5 ,-1,   6,-1, 3],
+               [-1,-1, 5,  -1,-1,-1,  -1,-1,-1],
+               [-1, 2, 9,  -1,8 ,-1,  -1, 4,-1],
           ]
           for i in range(0,9):
                for j in range(0,9):
                     self.cells[i][j].setNum(nums[i][j])
-          return self.naive()
+                    self.cells[i][j].drawNum(self)
+          

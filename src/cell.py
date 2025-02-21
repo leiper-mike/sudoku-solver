@@ -50,6 +50,7 @@ class Cell():
           """Resets the number, and it's candidates"""
           self.num = -1
           self.possible = [1,2,3,4,5,6,7,8,9]
+          self.hasBlocked = False
 
      def eraseNum(self,canvas):
           """Deletes the number text from the canvas"""

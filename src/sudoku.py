@@ -1,5 +1,11 @@
 import math
 from cell import Cell
+from enum import Enum
+class MODE(Enum):
+     ROW = 0,
+     COLUMN = 1,
+     BOX = 2,
+     ALL = 3
 
 class Sudoku():
      def __init__(self,cells:list[list[Cell]]):
@@ -26,11 +32,27 @@ class Sudoku():
                actions.extend(self.blockAll())
                actions.extend(self.nakedSingle())
                actions.extend(self.hiddenSingle())
+               actions.extend(self.virtualSingle())
+               actions.extend(self.virtualSingleBox())
 
                actions.extend(self.nakedPairs())
                actions.extend(self.hiddenPairs())
-               actions.extend(self.virtualSingle())
                # if none of the strategies have taken an action in the last two iterations, we're stuck, exit
+               changed = size != len(actions)
+               if not changed:
+                    limit-=1
+               else:
+                    limit = 1
+          return actions
+     def advanced(self) -> list[str]:
+          changed = True
+          actions = []
+          limit = 1
+          while not self.check() and limit >= 0:
+               size = len(actions)
+               actions.extend(self.naive())
+               actions.extend(self.nakedTriples())
+               actions.extend(self.hiddenTriples())
                changed = size != len(actions)
                if not changed:
                     limit-=1
@@ -46,7 +68,9 @@ class Sudoku():
                     if not -1 in c.possible and len(c.possible) == 1:
                          num = c.possible[0]
                          c.setNum(num)
-                         self.block(i,j,num)
+                         self.block(i,j,num, MODE.ROW)
+                         self.block(i,j,num, MODE.COLUMN)
+                         self.block(i,j,num, MODE.BOX)
                          actions.append(f"Naked Single: Cell at Row: {i+1}, Column: {j+1} set to {num}")
           return actions
      def hiddenSingle(self) -> list[str]:
@@ -69,7 +93,9 @@ class Sudoku():
                for l in range(1,10):
                     if len(rowPossible[l]) == 1:
                          row[rowPossible[l][0]].setNum(l)
-                         self.block(i, rowPossible[l][0],l)
+                         self.block(i, rowPossible[l][0],l, MODE.ROW)
+                         self.block(i, rowPossible[l][0],l, MODE.COLUMN)
+                         self.block(i, rowPossible[l][0],l, MODE.BOX)
                          actions.append(f"Hidden Single: row #{i+1}, col#{rowPossible[l][0]+1} set to: {l}")
                #col
                for j in range(0,9):
@@ -79,7 +105,9 @@ class Sudoku():
                for l in range(1,10):
                     if len(colPossible[l]) == 1:
                          col[colPossible[l][0]].setNum(l)
-                         self.block(colPossible[l][0],i,l)
+                         self.block(colPossible[l][0],i,l, MODE.ROW)
+                         self.block(colPossible[l][0],i,l, MODE.COLUMN)
+                         self.block(colPossible[l][0],i,l, MODE.BOX)
                          actions.append(f"Hidden Single: col#{i+1}, row #{colPossible[l][0]+1} set to: {l}")
                #box
                for j in range(0,9):
@@ -90,149 +118,113 @@ class Sudoku():
                     if len(boxPossible[l]) == 1:
                          box[boxPossible[l][0]].setNum(l)
                          i1, j1 = self.boxRelativeToAbsoluteCoords(i,boxPossible[l][0])
-                         self.block(i1, j1, l) 
+                         self.block(i1, j1, l, MODE.ROW) 
+                         self.block(i1, j1, l, MODE.COLUMN) 
+                         self.block(i1, j1, l, MODE.BOX) 
                          actions.append(f"Hidden Single: item#{boxPossible[l][0]+1}, in box{i+1} set to: {l}")
           return actions
-     def nakedPairs(self) -> bool:
-          """Iterates over every box, if there is a pair of cells in a row/col that have only the same two possiblities, remove possiblities of them from the box and row/col respectively"""
+     def nakedPairs(self) -> list[str]:
+          """Iterates over every box, if there is a pair of cells in a row/col/box that have only the same two possiblities, remove possiblities of them from the row/col/box"""
           actions = []
           for i in range(0,9):
-               box = self.getBox(i)
-               #abandon all hope ye who enter here
-               r1P,r1I,r2P,r2I,r3P,r3I,c1P,c1I,c2P,c2I,c3P,c3I = [],[],[],[],[],[],[],[],[],[],[],[]
-               row1 = box[:3]
-               row2 = box[3:6]
-               row3 = box[6:9]
-               col1 = box[:7:3]
-               col2 = box[1:8:3]
-               col3 = box[2:9:3]
-               for j in range(0,3):
-                    #if there are only 2 possiblities in a cell
-                    if len(row1[j].possible) == 2:
-                         #add the possibilites to an array, save the index
-                         r1P.append(row1[j].possible)
-                         r1I.append(j)
-                    if len(row2[j].possible) == 2:
-                         r2P.append(row2[j].possible)
-                         r2I.append(j)
-                    if len(row3[j].possible) == 2:
-                         r3P.append(row3[j].possible)
-                         r3I.append(j)
-                    if len(col1[j].possible) == 2:
-                         c1P.append(col1[j].possible)
-                         c1I.append(j)
-                    if len(col2[j].possible) == 2:
-                         c2P.append(col2[j].possible)
-                         c2I.append(j)
-                    if len(col3[j].possible) == 2:
-                         c3P.append(col3[j].possible)
-                         c3I.append(j)
-               #check that there are two pairs and they are the same pair, blocks row/column respectively and box
-               i1,j1 = self.getBoxPos(i)
-               if len(r1P) == 2 and r1P[0] == r1P[1]:
-                    self.cells[i1][j1+r1I[0]].hasBlocked = True
-                    self.cells[i1][j1+r1I[1]].hasBlocked = True
+               row = self.getRow(i)
 
-                    stat1 = self.blockMultiple(i1,j1+r1I[0],r1P[0], col=False)
-                    self.cells[i1][j1+r1I[1]].possible = r1P[0]
-                    stat2 = self.blockMultiple(i1,j1+r1I[1],r1P[0], col=False)
-                    #allow them to be blocked again
-                    self.cells[i1][j1+r1I[0]].hasBlocked = False
-                    self.cells[i1][j1+r1I[1]].hasBlocked = False
-                    if stat1 or stat2:
-                         actions.append(f"Naked Pair: Cells {i1+1},{j1+r1I[0]+1} and {i1+1},{j1+r1I[1]+1}, eliminating {r1P[0]} in row {i1+1} and box #{i+1}")
-               if len(r2P) == 2 and r2P[0] == r2P[1]:
-                    self.cells[i1+1][j1+r2I[0]].hasBlocked = True
-                    self.cells[i1+1][j1+r2I[1]].hasBlocked = True
+               for j in range(0,8):
+                    if not -1 in row[j].possible and len(row[j].possible) == 2:
+                         for k in range(j+1,9):
+                              if len(row[k].possible) == 2 and row[j].possible == row[k].possible:
+                                   row[k].hasBlocked = True
+                                   row[j].hasBlocked = True
+                                   status = self.blockMultiple(i,0,row[j].possible,MODE.ROW)
+                                   row[k].hasBlocked = False
+                                   row[j].hasBlocked = False
+                                   if status: 
+                                        actions.append(f"Naked Pair: Cells {j+1},{k+1} in row {i+1} can only be {row[j].possible}, removing those candidates from the row")
 
-                    stat1 = self.blockMultiple(i1+1,j1+r2I[0],r2P[0], col=False)
-                    self.cells[i1+1][j1+r2I[1]].possible = r2P[0]
-                    stat2 = self.blockMultiple(i1+1,j1+r2I[1],r2P[0], col=False)
 
-                    self.cells[i1+1][j1+r2I[0]].hasBlocked = False
-                    self.cells[i1+1][j1+r2I[1]].hasBlocked = False
-                    if stat1 or stat2:
-                         actions.append(f"Naked Pair: Cells {i1+2},{j1+r2I[0]+1} and {i1+2},{j1+r2I[1]+1}, eliminating {r2P[0]} in row {i1+2} and box #{i+1}")
-               if len(r3P) == 2 and r3P[0] == r3P[1]:
-                    self.cells[i1+2][j1+r3I[0]].hasBlocked = True
-                    self.cells[i1+2][j1+r3I[1]].hasBlocked = True
-
-                    stat1 = self.blockMultiple(i1+2,j1+r3I[0],r3P[0], col=False)
-                    self.cells[i1+2][j1+r3I[1]].possible = r3P[0]
-                    stat2 = self.blockMultiple(i1+2,j1+r3I[1],r3P[0], col=False)
-
-                    self.cells[i1+2][j1+r3I[0]].hasBlocked = False
-                    self.cells[i1+2][j1+r3I[1]].hasBlocked = False
-                    if stat1 or stat2:
-                         actions.append(f"Naked Pair: Cells {i1+3},{j1+r3I[0]+1} and {i1+3},{j1+r3I[1]+1}, eliminating {r3P[0]} in row {i1+3} and box #{i+1}")
-               if len(c1P) == 2 and c1P[0] == c1P[1]:
-                    self.cells[i1+c1I[0]][j1].hasBlocked = True
-                    self.cells[i1+c1I[1]][j1].hasBlocked = True
-
-                    stat1 = self.blockMultiple(i1+c1I[0],j1,c1P[0], row=False)
-                    self.cells[i1+c1I[1]][j1].possible = c1P[0]
-                    stat2 = self.blockMultiple(i1+c1I[1],j1,c1P[0], row=False)
-
-                    self.cells[i1+c1I[0]][j1].hasBlocked = False
-                    self.cells[i1+c1I[1]][j1].hasBlocked = False
-                    if stat1 or stat2:
-                         actions.append(f"Naked Pair: Cells {i1+c1I[0]+1},{j1+1} and {i1+c1I[1]+1},{j1+1}, eliminating {c1P[0]} in col {j1+1} and box #{i+1}")
-               if len(c2P) == 2 and c2P[0] == c2P[1]:
-                    self.cells[i1+c2I[0]][j1+1].hasBlocked = True
-                    self.cells[i1+c2I[1]][j1+1].hasBlocked = True
-
-                    stat1 = self.blockMultiple(i1+c2I[0],j1+1,c2P[0], row=False)
-                    self.cells[i1+c2I[1]][j1+1].possible = c2P[0]
-                    stat2 = self.blockMultiple(i1+c2I[1],j1+1,c2P[0], row=False)
-
-                    self.cells[i1+c2I[0]][j1+1].hasBlocked = False
-                    self.cells[i1+c2I[1]][j1+1].hasBlocked = False
-                    if stat1 or stat2:
-                         actions.append(f"Naked Pair: Cells {i1+c2I[0]+1},{j1+2} and {i1+c2I[1]+1},{j1+2}, eliminating {c2P[0]} in col {j1+2} and box #{i+1}")
-               if len(c3P) == 2 and c3P[0] == c3P[1]:
-                    self.cells[i1+c3I[0]][j1+2].hasBlocked = True
-                    self.cells[i1+c3I[1]][j1+2].hasBlocked = True
                
-                    stat1 = self.blockMultiple(i1+c3I[0],j1+2,c3P[0], row=False)
-                    self.cells[i1+c3I[1]][j1+2].possible = c3P[0]
-                    stat2 = self.blockMultiple(i1+c3I[1],j1+2,c3P[0], row=False)
+          for i in range(0,9):
+               col = self.getCol(i)
 
-                    self.cells[i1+c3I[0]][j1+2].hasBlocked = False
-                    self.cells[i1+c3I[1]][j1+2].hasBlocked = False
-                    if stat1 or stat2:
-                         actions.append(f"Naked Pair: Cells {i1+c3I[0]+1},{j1+3} and {i1+c3I[1]+1},{j1+3}, eliminating {c3P[0]} in col {j1+3} and box #{i+1}")
+               for j in range(0,8):
+                    if not -1 in col[j].possible and len(col[j].possible) == 2:
+                         for k in range(j+1,9):
+                              if len(col[k].possible) == 2 and col[j].possible == col[k].possible:
+                                   col[k].hasBlocked = True
+                                   col[j].hasBlocked = True
+                                   status = self.blockMultiple(0,i,col[j].possible,MODE.COLUMN)
+                                   col[k].hasBlocked = False
+                                   col[j].hasBlocked = False
+                                   if status: 
+                                        actions.append(f"Naked Pair: Cells {j+1},{k+1} in col {i+1} can only be {col[j].possible}, removing those candidates from the column")
+               
+
+          for i in range(0,9):
+               box = self.getBox(i)
+
+               for j in range(0,8):
+                    if not -1 in box[j].possible and len(box[j].possible) == 2:
+                         for k in range(j+1,9):
+                              if len(box[k].possible) == 2 and box[j].possible == box[k].possible:
+                                   box[k].hasBlocked = True
+                                   box[j].hasBlocked = True
+                                   i1,j1 = self.boxRelativeToAbsoluteCoords(i,j)
+                                   status = self.blockMultiple(i1,j1,box[j].possible,MODE.BOX)
+                                   box[k].hasBlocked = False
+                                   box[j].hasBlocked = False
+                                   if status: 
+                                        actions.append(f"Naked Pair: Cells {j+1},{k+1} in box {i+1} can only be {box[j].possible}, removing those candidates from the box")
+              
+
           return actions
-     def hiddenPairs(self) -> bool:
+     def hiddenPairs(self) -> list[str]:
           """Iterates over every box, and finds pairs of possible numbers, eliminating other possibilities on those cells"""
           actions = []
           for i in range(0,9):
-               box = self.getBox(i)
-               possibles = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[]}
-               for j in range(0,9):
-                    for k in range(1,10):
-                         if k in box[j].possible and possibles[k] != [-1]:
-                              # if there were going to be more than 3 cells with the value, don't care about that value
-                              if len(possibles[k]) == 2:
-                                   possibles[k] = [-1]
-                              else:
-                                   possibles[k].append(j)
+               row = self.getRow(i)
+
+               rowPossible = self.getPossiblesDict(i,MODE.ROW,2,2)
+               rowPairs = self.getNGroup(rowPossible,2,2)
+
                
-               for key, value in possibles.items():
-                    #exclude singles
-                    if len(value) == 2:
-                         #search rest of possibilities
-                         for l in range(key+1,10):
-                              # if a pair is found
-                              if value == possibles[l]:
-                                   #set their possible values to only their shared values (the hidden pair)
-                                   size1 = len(box[value[0]].possible)
-                                   size2 = len(box[value[1]].possible)
-                                   box[value[0]].possible = [key,l]
-                                   box[value[1]].possible = [key,l]
-                                   if len(box[value[0]].possible) != size1 or len(box[value[0]].possible) != size2:
-                                        actions.append(f"Hidden pair: Cells #{value[0]+1},{value[1]+1} in box #{i+1} are the only cells to contain both {key} and {l}, therefore they must be one of the two")
+               for rowPair in rowPairs:
+                    diff = False
+                    for index in rowPair[1]:
+                         diff = diff or row[index].possible != rowPair[0]
+                         row[index].possible = rowPair[0].copy()
+                    if diff:
+                         actions.append(f"Hidden pair: Cells {rowPair[1][0]+1},{rowPair[1][1]+1} in row {i+1} are the only cells in the row that contain: {rowPair[0]}, removing other candidates fromm those cells.")
+
+          for i in range(0,9):
+               col = self.getCol(i)
+
+               colPossible = self.getPossiblesDict(i,MODE.COLUMN,2,2)
+               colPairs = self.getNGroup(colPossible,2,2)
+
+               for colPair in colPairs:
+                    diff = False
+                    for index in colPair[1]:
+                         diff = diff or col[index].possible != colPair[0]
+                         col[index].possible = colPair[0].copy()
+                    if diff:
+                         actions.append(f"Hidden pair: Cells {colPair[1][0]+1},{colPair[1][1]+1} in column {i+1} are the only cells in the column that contain: {colPair[0]}, removing other candidates fromm those cells.")
+
+          for i in range(0,9):
+               box = self.getBox(i)
+
+               boxPossible = self.getPossiblesDict(i,MODE.BOX,2,2)
+               boxPairs = self.getNGroup(boxPossible,2,2)
+
+               for boxPair in boxPairs:
+                    diff = False
+                    for index in boxPair[1]:
+                         diff = diff or box[index].possible != boxPair[0]
+                         box[index].possible = boxPair[0].copy()
+                    if diff:
+                         actions.append(f"Hidden pair: Cells {boxPair[1][0]+1},{boxPair[1][1]+1} in box {i+1} are the only cells in the box that contain: {boxPair[0]}, removing other candidates fromm those cells.")
+                         
           return actions
-     def virtualSingle(self) -> bool:
+     def virtualSingle(self) -> list[str]:
           actions = []
           for i in range(0,9):
                box = self.getBox(i)
@@ -245,6 +237,8 @@ class Sudoku():
                                    possibles[k] = [-1]
                               else:
                                    possibles[k].append(j)
+                         elif -1 in box[j].possible:
+                              break
                # if a pair is in a row or col, block row/col with num
                for key, value in possibles.items():
                     #exclude singles
@@ -260,7 +254,7 @@ class Sudoku():
                               self.cells[i1][j1].hasBlocked = True
                               self.cells[i2][j2].hasBlocked = True
                               #block pair from col
-                              status = self.block(i1,j1,key,row=False,box=False)
+                              status = self.block(i1,j1,key,MODE.COLUMN)
                               self.cells[i1][j1].hasBlocked = False
                               self.cells[i2][j2].hasBlocked = False
                               if status:
@@ -276,55 +270,251 @@ class Sudoku():
                               self.cells[i1][j1].hasBlocked = True
                               self.cells[i2][j2].hasBlocked = True
                               #block pair from row
-                              status = self.block(i1,j1,key,col=False,box=False)
+                              status = self.block(i1,j1,key,MODE.ROW)
                               self.cells[i1][j1].hasBlocked = False
                               self.cells[i2][j2].hasBlocked = False
                               if status:
                                    actions.append(f"Virtual Single: Cells {i1+1},{j1+1} and {i2+1},{j2+1} are the only cells that contain {key}, and are in a row in box #{i+1}, removing possibilities of {key} in row {i1+1}")
+          return actions
+     def virtualSingleBox(self) -> list[str]:
+          actions = []
+          #loop throw col/rows, get possible dict, if any with 2, check if in same box, block box 
+          for i in range(0,9):
+               rowP = self.getPossiblesDict(i,MODE.ROW,2,2)
+               row = self.getRow(i)
+               for j in range(1,10):
+                    if not -1 in rowP[j]:
+                         ind1, ind2 = self.getBoxIndexFromPos(i, rowP[j][0]), self.getBoxIndexFromPos(i, rowP[j][1])
+                         if ind1 == ind2:
+                              row[rowP[j][0]].hasBlocked = True
+                              row[rowP[j][1]].hasBlocked = True
+                              status = self.block(i,rowP[j][0],j,MODE.BOX)
+                              row[rowP[j][0]].hasBlocked = False
+                              row[rowP[j][1]].hasBlocked = False
+                              if status:
+                                   actions.append(f"Virtual pair: Cells {rowP[j][0]+1},{rowP[j][1] +1} in row {i+1} are the only cells that contain {j} in that row, and they are in the same box, no other cell in that box can be {j}")
+          for i in range(0,9):
+               colP = self.getPossiblesDict(i,MODE.COLUMN,2,2)
+               col = self.getCol(i)
+               for j in range(1,10):
+                    if not -1 in colP[j]:
+                         ind1, ind2 = self.getBoxIndexFromPos(i, colP[j][0]), self.getBoxIndexFromPos(i, colP[j][1])
+                         if ind1 == ind2:
+                              col[colP[j][0]].hasBlocked = True
+                              col[colP[j][1]].hasBlocked = True
+                              status = self.block(colP[j][0],i,j,MODE.BOX)
+                              col[colP[j][0]].hasBlocked = False
+                              col[colP[j][1]].hasBlocked = False
+                              if status:
+                                   actions.append(f"Virtual pair: Cells {colP[j][0]+1},{colP[j][1] +1} in column {i+1} are the only cells that contain {j} in that column, and they are in the same box, no other cell in that box can be {j}")
+          return actions
+     def nakedTriples(self) -> list[str]:
+          """Iterates over every box, if there is a triplet of cells in a row/col/box that have only the same three possiblities, remove possiblities of them from the row/col/box"""
+          actions = []
+          for i in range(0,9):
+               rowP = self.getPossibles(MODE.ROW,i)
+               triplets = {}
+               #get all naked triples
+               for j in range(0,9):
+                    if not -1 in rowP[j] and len(rowP[j]) == 3:
+                         candidates = self.listToStr(rowP[j])
+                         if not candidates in triplets:
+                              triplets[candidates] = [j]
+                         else:
+                              triplets[candidates].append(j)
+               #add any cells that are a subset of a naked triple, ex 1,5 and 5,9 are subsets of triple 1,5,9
+               for k in range(0,9):
+                    for key in triplets.keys():
+                         if not -1 in rowP[k] and not k in triplets[key] and len(rowP[k]) != 1 and self.listToStr(rowP[k]) in key :
+                              triplets[key].append(k)
+               #block
+               row = self.getRow(i)
+               for triplet, indices in triplets.items():
+                         if len(indices) == 3:
+                              row = self.getRow(i)
+                              for ind in indices:
+                                   row[ind].hasBlocked = True
+                              status = self.blockMultiple(i,0,self.strToIntList(triplet),MODE.ROW)
+                              for ind in indices:
+                                   row[ind].hasBlocked = False
+                              if status: 
+                                   actions.append(f"Naked Triple: Cells {indices[0]+1},{indices[1]+1},{indices[2]+1} in row {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the row")
+          for i in range(0,9):
+               colP = self.getPossibles(MODE.COLUMN,i)
+               triplets = {}
+               #get all naked triples
+               for j in range(0,9):
+                    if not -1 in colP[j] and len(colP[j]) == 3:
+                         candidates = self.listToStr(colP[j])
+                         if not candidates in triplets:
+                              triplets[candidates] = [j]
+                         else:
+                              triplets[candidates].append(j)
+               #add any cells that are a subset of a naked triple, ex 1,5 and 5,9 are subsets of triple 1,5,9
+               for k in range(0,9):
+                    for key in triplets.keys():
+                         if not -1 in colP[k] and not k in triplets[key] and len(colP[k]) != 1 and self.listToStr(colP[k]) in key:
+                              triplets[key].append(k)
+               #block
+               col = self.getCol(i)
+               for triplet, indices in triplets.items():
+                         if len(indices) == 3:
+                              
+                              for ind in indices:
+                                   col[ind].hasBlocked = True
 
+                              status = self.blockMultiple(0,i,self.strToIntList(triplet),MODE.COLUMN)
+                              for ind in indices:
+                                   col[ind].hasBlocked = False
+                              if status: 
+                                   actions.append(f"Naked Triple: Cells {indices[0]+1},{indices[1]+1},{indices[2]+1} in column {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the column")
+          for i in range(0,9):
+               boxP = self.getPossibles(MODE.BOX,i)
+               triplets = {}
+               #get all naked triples
+               for j in range(0,9):
+                    if not -1 in boxP[j] and len(boxP[j]) == 3:
+                         candidates = self.listToStr(boxP[j])
+                         if not candidates in triplets:
+                              triplets[candidates] = [j]
+                         else:
+                              triplets[candidates].append(j)
+               #add any cells that are a subset of a naked triple, ex 1,5 and 5,9 are subsets of triple 1,5,9
+               for k in range(0,9):
+                    for key in triplets.keys():
+                         if not -1 in boxP[k] and not k in triplets[key] and len(boxP[k]) != 1 and self.listToStr(boxP[k]) in key:
+                              triplets[key].append(k)
+               #block
+               box = self.getBox(i)
+               for triplet, indices in triplets.items():
+                         if len(indices) == 3:
+                              for ind in indices:
+                                   box[ind].hasBlocked = True
+                              i1,j1 = self.getBoxPos(i)
+                              status = self.blockMultiple(i1,j1,self.strToIntList(triplet),MODE.BOX)
+                              for ind in indices:
+                                   box[ind].hasBlocked = False
+                              if status: 
+                                   actions.append(f"Naked Triple: Cells {indices[0]+1},{indices[1]+1},{indices[2]+1} in box {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the box")
+          return actions
+     def hiddenTriples(self) -> list[str]:
+          actions = []
+          for i in range(0,9):
+               rowP = self.getPossiblesDict(i,MODE.ROW,2,3)
+               #{"468":[1,5,7]}
+               triples = {}
+               for j in range(1,10):
+                    if len(rowP[j]) == 3:
+                         cells = self.listToStr(rowP[j])
+                         triples[cells] = [j]
+                         for k in range(1,10):
+                              if  k != j and self.listToStr(rowP[k]) in cells:
+                                   triples[cells].append(k)
+
+               for indices, triplet in triples.items():
+                    if len(triplet) == 3:
+                              row = self.getRow(i)
+                              inds = self.strToIntList(indices)
+                              changed = False
+                              for ind in inds:
+                                   if not set(row[ind].possible) <= set(triplet):
+                                        row[ind].possible = list(set(row[ind].possible) & set(triplet))
+                                        changed = True
+                              if changed:
+                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in row {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the row")
+          for i in range(0,9):
+               colP = self.getPossiblesDict(i,MODE.COLUMN,2,3)
+               #{"468":[1,5,7]}
+               triples = {}
+               for j in range(1,10):
+                    if len(colP[j]) == 3:
+                         cells = self.listToStr(colP[j])
+                         triples[cells] = [j]
+                         for k in range(1,10):
+                              if k != j and self.listToStr(colP[k]) in cells:
+                                   triples[cells].append(k)
+
+               for indices, triplet in triples.items():
+                    if len(triplet) == 3:
+                              col = self.getCol(i)
+                              inds = self.strToIntList(indices)
+                              changed = False
+                              for ind in inds:
+                                   if not set(col[ind].possible) <= set(triplet):
+                                        col[ind].possible = list(set(col[ind].possible) & set(triplet))
+                                        changed = True
+                              if changed:
+                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in column {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the column")
+          for i in range(0,9):
+               boxP = self.getPossiblesDict(i,MODE.BOX,2,3)
+               #{"468":[1,5,7]}
+               triples = {}
+               for j in range(1,10):
+                    if len(boxP[j]) == 3:
+                         cells = self.listToStr(boxP[j])
+                         triples[cells] = [j]
+                         for k in range(1,10):
+                              if k != j and self.listToStr(boxP[k]) in cells:
+                                   triples[cells].append(k)
+
+               for indices, triplet in triples.items():
+                    if len(triplet) == 3:
+                              box = self.getBox(i)
+                              inds = self.strToIntList(indices)
+                              triplet = sorted(triplet)
+                              changed = False
+                              for ind in inds:
+                                   if not set(box[ind].possible) <= set(triplet):
+                                        box[ind].possible = list(set(box[ind].possible) & set(triplet))
+                                        changed = True
+                              if changed:
+                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in box {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the box")     
 
           return actions
-     def blockAll(self) -> bool:
+     def blockAll(self) -> list[str]:
           """Iterates over board, calling self.block() on any cells that haven't blocked yet and have a value"""
           actions = []
           for i in range(0,9):
                for j in range(0,9):
                     cell = self.cells[i][j]
                     if cell.num > 0 and not cell.hasBlocked:
-                         changed = self.block(i,j,cell.num)
+                         c1 = self.block(i,j,cell.num, MODE.BOX)
+                         c2 = self.block(i,j,cell.num, MODE.COLUMN)
+                         c3 = self.block(i,j,cell.num, MODE.ROW)
+                         changed = c1 or c2 or c3
                          cell.hasBlocked = True
                          if changed:
                               actions.append(f"Blocking: cell at {i+1},{j+1} blocked {cell.num}")
           return actions         
-     def block(self, i, j, num, row = True, col = True, box = True) -> bool:
+     def block(self, i, j, num, mode:MODE) -> bool:
           """Removes the input num from the list of possible numbers in the column, row, and box of the input coordinate"""
-          r = None
-          if row:
-               r = self.getRow(i)
-          c = None
-          if col:
-               c = self.getCol(j)
-          b = None
-          if box:
-               b = self.getBoxFromPos(i,j)
           changed = False
-          for k in range(0,9):
-               #check row is enabled, that the current cell hasn't blocked, that the current cell has the num being blocked as a possibility, and that the cell isn't the one we're blocking from
-               if row and not r[k].hasBlocked and num in r[k].possible and self.cells[i][j] != r[k]:
-                    r[k].possible.remove(num)
-                    changed = True
-               if col and not c[k].hasBlocked and num in c[k].possible and self.cells[i][j] != c[k]:
-                    c[k].possible.remove(num)
-                    changed = True
-               if box and not b[k].hasBlocked and num in b[k].possible and self.cells[i][j] != b[k]:
-                    b[k].possible.remove(num)
-                    changed = True
+          match mode:
+               case MODE.ROW:
+                    r = self.getRow(i)
+                    for k in range(0,9):
+                         if not r[k].hasBlocked and num in r[k].possible:
+                              r[k].possible.remove(num)
+                              changed = True
+               case MODE.COLUMN:
+                    c = self.getCol(j)
+                    for k in range(0,9):
+                         if not c[k].hasBlocked and num in c[k].possible:
+                              c[k].possible.remove(num)
+                              changed = True
+               case MODE.BOX:
+                    b = self.getBoxFromPos(i,j)
+                    for k in range(0,9):
+                         if not b[k].hasBlocked and num in b[k].possible:
+                              b[k].possible.remove(num)
+                              changed = True
+
           return changed
-     def blockMultiple(self, i, j, nums:list[int], row = True, col = True, box = True) -> bool:
+     def blockMultiple(self, i, j, nums:list[int], mode:MODE) -> bool:
           """Removes the input nums from the list of possible numbers in the column, row, and box of the input coordinate"""
           ret = []
           for n in nums:
-               ret.append(self.block(i,j,n,row,col,box))
+               ret.append(self.block(i,j,n,mode))
           return True in ret
      def getCol(self, index:int) -> list[Cell]:
           """Returns a list of cells at the given column index"""              
@@ -358,32 +548,102 @@ class Sudoku():
                for l in range(j,j+3):
                     ret.append(self.cells[k][l])
           return ret
+     def getBoxIndexFromPos(self,i,j) -> int:
+          i = math.floor(i / 3)
+          j = math.floor(j / 3)
+          return (3 * i) + j
      def updateSudoku(self, cells:list[list[Cell]]) -> None:
           self.cells = cells
-     def getPossibles(self, index=-1, row=False, col=False, box=False) -> list[list[list[int]]]:
+     def getPossibles(self,mode:MODE, index=-1 ) -> list[list[int]]:
           ret = []
-          if row:
-               for i in range(0,9):
-                    ret[0].append(self.cells[index][i].possible)
-          elif col:
-               for i in range(0,9):
-                    ret[0].append(self.cells[i][index].possible)
-          elif box:
-               box = self.getBox(index)
-               for c in box:
-                    ret[0].append(c.possible)
-          else:
-               for i in range(0,9):
-                    ret.append([])
-                    for j in range(0,9):
-                         ret[i].append(self.cells[i][j].possible)
+          match mode:
+               case MODE.ROW:
+                    for i in range(0,9):
+                         ret.append(self.cells[index][i].possible)
+               case MODE.COLUMN:
+                    for i in range(0,9):
+                         ret.append(self.cells[i][index].possible)
+               case MODE.BOX:
+                    box = self.getBox(index)
+                    for c in box:
+                         ret.append(c.possible)
+               case MODE.ALL:
+                    for i in range(0,9):
+                         ret.append([])
+                         for j in range(0,9):
+                              ret[i].append(self.cells[i][j].possible)
+
           return ret
      def boxRelativeToAbsoluteCoords(self, boxIndex:int, cellIndex:int) -> tuple[int,int]:
           return (math.floor(boxIndex / 3) * 3 + (math.floor(cellIndex/3)),(boxIndex % 3) * 3 + (cellIndex % 3))
+     def getPossiblesDict(self, index, mode:MODE,min = 0, max=9) -> dict[int:list[int]]:
+          """Returns a dictionary, with the key representing the candidate, and the value a list of indices for cells that have that candidate."""
+          possibles = {1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[]}
+          match mode:
+               case MODE.ROW:
+                    row = self.getRow(index)
+                    for j in range(0,9):
+                         for k in range(1,10):
+                              #skip if cell has a value
+                              if -1 in row[j].possible:
+                                   break
+                              elif k in row[j].possible:
+                                   possibles[k].append(j)
+               case MODE.COLUMN:
+                    col = self.getCol(index)
+                    for j in range(0,9):
+                         for k in range(1,10):
+                              #skip if cell has a value
+                              if -1 in col[j].possible:
+                                   break
+                              elif k in col[j].possible:
+                                   possibles[k].append(j)
+               case MODE.BOX:
+                    box = self.getBox(index)
+                    for j in range(0,9):
+                         for k in range(1,10):
+                              #skip if cell has a value
+                              if -1 in box[j].possible:
+                                   break
+                              elif k in box[j].possible:
+                                   possibles[k].append(j)
+               case _:
+                    raise ValueError("Invalid MODE supplied to getPossiblesDict, must be MODE.ROW,MODE.COLUMN, or MODE.BOX")     
+          #enforce bounds on number of cells with candidates we are looking for
+          for i in range(1,10):
+               if len(possibles[i]) < min or len(possibles[i]) > max:
+                    possibles[i] = [-1]          
+          return possibles
+     def getNGroup(self, possibilities:dict[int:list[int]], candidateN:int, indexN:int) -> list[tuple[int,list[int]]]:
+          """Returns a list that contains groups of n candidates that have n cells in commmon: n=2 will look for 2 candidates that have 2 cells in common, """
+          pos = possibilities.copy()
+          ret = []
+          for i in range(1,8):
+               if -1 in pos[i]: 
+                    continue
+               indices = set(pos[i])
+               candidates = [i]
+               for j in range(i+1,10):
+                    #matching pair of indices
+                    if not -1 in pos[i] and pos[i] == pos[j]:
+                         for index in pos[j]:
+                              indices.add(index)
+                         candidates.append(j)
+               if len(candidates) == candidateN and len(indices) == indexN:
+                    ret.append((candidates,list(indices)))
+          return ret     
+     def listToStr(self, list:list[int]) -> str:
+          ret = ""
+          for l in list:
+               ret+=str(l)
+          return ret
+     def strToIntList(self, str:str) -> list[int]:
+          ret = []
+          nums = list(str)
+          for num in nums:
+               ret.append(int(num))
+          return ret
 
-     #TODO:
-     # add a setnum func to sudoku, blocks num after assigning
-     # hidden single set col 2 row 8 to 3
 
 
 

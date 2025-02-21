@@ -91,10 +91,10 @@ class Window():
                     return self.board.naive()
                case 1:
                     #for testing
-                    return self.board.test()
+                    return self.board.advanced()
 
                case 2:
-                    pass
+                    return self.board.test()
                case 3:
                     pass
      def check(self) -> None:
