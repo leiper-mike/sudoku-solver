@@ -87,7 +87,7 @@ class TestSudoku(unittest.TestCase):
           cells = cellPossibleFromNums(input)
           sudoku = Sudoku(cells)
           status = sudoku.nakedSingle()
-          #self.assertListEqual(status,correct)
+          self.assertListEqual(status,correct)
           self.assertEqual(sudoku.cells[0][0].num, 1)
           self.assertEqual(sudoku.cells[0][8].num, 2)
           self.assertEqual(sudoku.cells[8][0].num, 3)
@@ -137,7 +137,7 @@ class TestSudoku(unittest.TestCase):
           cells = cellPossibleFromNums(input)
           sudoku = Sudoku(cells)
           status = sudoku.hiddenSingle()
-          #self.assertListEqual(status,correct)
+          self.assertListEqual(status,correct)
           for i in range(0,9):
                for j in range(0,9):
                      self.assertEqual(cells[i][j].num, solved[i][j], msg=f"i:{i},j{j}")
@@ -165,14 +165,14 @@ class TestSudoku(unittest.TestCase):
                [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
                [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
                ]
-          correctStatus = [
-               'Naked Pair: Cells 5,1 and 5,3, eliminating [1, 6] in row 5 and box #4',
-               'Naked Pair: Cells 5,7 and 5,9, eliminating [5, 8] in row 5 and box #6'
-               ]
+          correctStatus = ['Naked Pair: Cells 1,3 in row 5 can only be [1, 6], removing those candidates from the row',
+                           'Naked Pair: Cells 4,6 in box 4 can only be [1, 6], removing those candidates from the box',
+                           'Naked Pair: Cells 4,6 in box 6 can only be [5, 8], removing those candidates from the box'
+                           ]
           cells = cellPossibleFromNums(input)
           sudoku = Sudoku(cells)
           status = sudoku.nakedPairs()
-          #self.assertListEqual(status, correctStatus)
+          self.assertListEqual(status, correctStatus)
           for i in range(0,9):
                for j in range(0,9):
                      self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
@@ -201,15 +201,215 @@ class TestSudoku(unittest.TestCase):
                     [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
                ]
           correctStatus = [
-               "Hidden pair: Cells #7,8 in box #6 are the only cells to contain both 6 and 7, therefore they must be one of the two"
+               "Hidden pair: Cells 7,8 in row 6 are the only cells in the row that contain: [6, 7], removing other candidates fromm those cells.",
+               'Hidden pair: Cells 4,6 in column 9 are the only cells in the column that contain: [1, 9], removing other candidates fromm those cells.'
                ]
           cells = cellPossibleFromNums(input)
           sudoku = Sudoku(cells)
           status = sudoku.hiddenPairs()
-          #self.assertListEqual(status, correctStatus)
+          self.assertListEqual(status, correctStatus)
           for i in range(0,9):
                for j in range(0,9):
                      self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+     def testNakedTriplePure(self):
+          input = [
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[1,2,4],[1,2,4],[-1],[-1],[-1],[-1],[1,2,4,7],[1,2,4],[2,4,6,7]],
+               ]
+          correct = [
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[1,2,4],[1,2,4],[-1],[-1],[-1],[-1],[7],[1,2,4],[6,7]],
+               ]
+          correctStatus = [
+                    "Naked Triple: Cells 1,2,8 in row 9 can only be [1, 2, 4], removing those candidates from the row"
+               ]
+          cells = cellPossibleFromNums(input)
+          sudoku = Sudoku(cells)
+          status = sudoku.nakedTriples()
+          self.assertListEqual(status,correctStatus)
+          for i in range(0,9):
+               for j in range(0,9):
+                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+     def testNakedTripleSubset(self):
+          input = [
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[1,2,4],[1,4],[-1],[-1],[-1],[-1],[1,2,4,7],[1,2,4],[2,4,6,7]],
+               ]
+          correct = [
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[1,2,4],[1,4],[-1],[-1],[-1],[-1],[7],[1,2,4],[6,7]],
+               ]
+          correctStatus = [
+                    "Naked Triple: Cells 1,2,8 in row 9 can only be [1, 2, 4], removing those candidates from the row"
+               ]
+          cells = cellPossibleFromNums(input)
+          sudoku = Sudoku(cells)
+          status = sudoku.nakedTriples()
+          self.assertListEqual(status,correctStatus)
+          for i in range(0,9):
+               for j in range(0,9):
+                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+     def testHiddenTriplePure(self):
+          input = [
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[1,2,4,5],[1,2,4,7],[-1],[-1],[-1],[-1],[3,6,7],[1,2,4,9],[6,7]],
+               ]
+          correct = [
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[1,2,4],[1,2,4],[-1],[-1],[-1],[-1],[3,6,7],[1,2,4],[6,7]],
+               ]
+          correctStatus = [
+                    "Hidden Triple: Cells 1,2,8 in row 9 can only be [1, 2, 4], removing those candidates from the row"
+               ]
+          cells = cellPossibleFromNums(input)
+          sudoku = Sudoku(cells)
+          status = sudoku.hiddenTriples()
+          self.assertListEqual(status,correctStatus)
+          for i in range(0,9):
+               for j in range(0,9):
+                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+
+     def testHiddenTripleSubset(self):
+          input = [
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[1,2,5],[2,4,7],[-1],[-1],[-1],[-1],[3,6,7],[1,2,4,9],[6,7]],
+               ]
+          correct = [
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
+               [[1,2],[2,4],[-1],[-1],[-1],[-1],[3,6,7],[1,2,4],[6,7]],
+               ]
+          correctStatus = [
+                    "Hidden Triple: Cells 1,2,8 in row 9 can only be [1, 2, 4], removing those candidates from the row"
+               ]
+          cells = cellPossibleFromNums(input)
+          sudoku = Sudoku(cells)
+          status = sudoku.hiddenTriples()
+          self.assertListEqual(status,correctStatus)
+          for i in range(0,9):
+               for j in range(0,9):
+                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+     def testXWingRow(self):
+          input = [
+               [[-1],[3,7,8],[3,7],[2,3,4,7,8],[2,7,8],[2,3,4,7,8],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[3,7],[-1],[-1],[-1],[3,7],[-1]],
+               [[3,7,8],[-1],[-1],[-1],[7,8],[-1],[-1],[-1],[3,7]],
+               [[3,5,7],[3,7],[-1],[-1],[-1],[2,7],[-1],[2,5],[-1]],
+               [[5,7],[-1],[-1],[2,7,8,9],[-1],[2,7,8],[3,7,9],[2,5],[3,7]],
+               [[-1],[-1],[-1],[7,9],[-1],[-1],[-1],[7,9],[-1]],
+               [[3,7,8],[-1],[3,7],[-1],[2,7,8,9],[2,3,7,8],[3,7,9],[-1],[-1]],
+               [[-1],[3,7,8],[-1],[3,7,8],[-1],[-1],[-1],[3,7,8],[-1]],
+               [[-1],[-1],[-1],[3,4,7,8],[7,8,9],[3,4,7,8],[3,7,9],[3,7,8,9],[-1]],
+               ]
+          correct = [
+               [[-1],[3,7,8],[3,7],[2,3,4,8],[2,7,8],[2,3,4,7,8],[-1],[-1],[-1]],
+               [[-1],[-1],[-1],[3,7],[-1],[-1],[-1],[3,7],[-1]],
+               [[3,7,8],[-1],[-1],[-1],[7,8],[-1],[-1],[-1],[3,7]],
+               [[3,5,7],[3,7],[-1],[-1],[-1],[2,7],[-1],[2,5],[-1]],
+               [[5,7],[-1],[-1],[2,8,9],[-1],[2,7,8],[3,7,9],[2,5],[3,7]],
+               [[-1],[-1],[-1],[7,9],[-1],[-1],[-1],[7,9],[-1]],
+               [[3,7,8],[-1],[3,7],[-1],[2,7,8,9],[2,3,7,8],[3,7,9],[-1],[-1]],
+               [[-1],[3,7,8],[-1],[3,8],[-1],[-1],[-1],[3,8],[-1]],
+               [[-1],[-1],[-1],[3,4,8],[7,8,9],[3,4,7,8],[3,7,9],[3,8,9],[-1]],
+               ]
+          correctStatus = [
+                    "X Wing: Cells 4,8 are the only cells that contain 7 in rows 2,6, and are in the same columns, removing the possibility of 7 in those columns."
+               ]
+          cells = cellPossibleFromNums(input)
+          sudoku = Sudoku(cells)
+          status = sudoku.xWing()
+          self.assertListEqual(status,correctStatus)
+          for i in range(0,9):
+               for j in range(0,9):
+                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+     def testXWingCol(self):
+          input = [
+               [[1,3,5,8],[2,3,5],[1,2,3],[3,5,6],[6,7,8],[3,5,6,7,8],[7,6],[-1],[-1]],
+               [[-1],[-1],[4,8],[-1],[-1],[4,8],[2,3],[-1],[2,3]],
+               [[3,4,5],[-1],[3,4,5],[3,4,5,6],[4,6,7],[-1],[6,7],[-1],[-1]],
+               [[3,4,6],[-1],[2,3,4,6,9],[2,4,6,8],[-1],[4,6,8],[2,3,4,8,9],[-1],[2,3,8,9]],
+               [[1,3,4,5,6],[2,3,5],[1,2,3,4,5,6],[-1],[2,3,6,8],[-1],[2,3,4,5,8],[2,3],[2,3,8]],
+               [[4,5],[-1],[2,4,5,9],[2,4],[-1],[-1],[2,4,5,9],[-1],[-1]],
+               [[-1],[-1],[3,5,6,8],[-1],[6,8],[3,5,6,8],[3,8,9],[-1],[3,6,8,9]],
+               [[3,6,8],[-1],[3,6,7,8],[2,3,6,8],[-1],[3,6,7,8],[2,3,8],[-1],[-1]],
+               [[-1],[3,5],[3,5,6,7,8],[2,3,4,5,6,8],[2,4,6,7,8],[3,4,5,6],[-1],[2,3],[2,3,6,8]],
+               ]
+          correct = [
+               [[1,3,5,8],[2,3,5],[1,2,3],[3,5,6],[6,7,8],[3,5,6,7,8],[7,6],[-1],[-1]],
+               [[-1],[-1],[4,8],[-1],[-1],[4,8],[2,3],[-1],[2,3]],
+               [[3,4,5],[-1],[3,4,5],[3,4,5,6],[4,6,7],[-1],[6,7],[-1],[-1]],
+               [[3,4,6],[-1],[2,3,4,6,9],[2,4,6,8],[-1],[4,6,8],[2,3,4,8,9],[-1],[2,3,8,9]],
+               [[1,3,4,5,6],[3,5],[1,3,4,5,6],[-1],[2,3,6,8],[-1],[3,4,5,8],[2,3],[3,8]],
+               [[4,5],[-1],[2,4,5,9],[2,4],[-1],[-1],[2,4,5,9],[-1],[-1]],
+               [[-1],[-1],[3,5,6,8],[-1],[6,8],[3,5,6,8],[3,8,9],[-1],[3,6,8,9]],
+               [[3,6,8],[-1],[3,6,7,8],[2,3,6,8],[-1],[3,6,7,8],[2,3,8],[-1],[-1]],
+               [[-1],[3,5],[3,5,6,7,8],[3,4,5,6,8],[2,4,6,7,8],[3,4,5,6],[-1],[2,3],[3,6,8]],
+               ]
+          correctStatus = [
+                    "X Wing: Cells 5,9 are the only cells that contain 2 in columns 5,8, and are in the same rows, removing the possibility of 2 in those rows."
+               ]
+          cells = cellPossibleFromNums(input)
+          sudoku = Sudoku(cells)
+          status = sudoku.xWing()
+          self.assertListEqual(status,correctStatus)
+          for i in range(0,9):
+               for j in range(0,9):
+                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")   
      def testVirtualSingle(self):
           input = [
                [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
@@ -242,7 +442,7 @@ class TestSudoku(unittest.TestCase):
           cells = cellPossibleFromNums(input)
           sudoku = Sudoku(cells)
           status = sudoku.virtualSingle()
-          #self.assertListEqual(status,correctStatus)
+          self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
                      self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")

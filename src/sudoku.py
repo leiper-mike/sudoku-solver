@@ -325,12 +325,13 @@ class Sudoku():
                #add any cells that are a subset of a naked triple, ex 1,5 and 5,9 are subsets of triple 1,5,9
                for k in range(0,9):
                     for key in triplets.keys():
-                         if not -1 in rowP[k] and not k in triplets[key] and len(rowP[k]) != 1 and self.listToStr(rowP[k]) in key :
+                         if not -1 in rowP[k] and not k in triplets[key] and len(rowP[k]) == 2 and set(rowP[k]) <= set(self.strToIntList(key)):
                               triplets[key].append(k)
                #block
                row = self.getRow(i)
                for triplet, indices in triplets.items():
                          if len(indices) == 3:
+                              indices = sorted(indices)
                               row = self.getRow(i)
                               for ind in indices:
                                    row[ind].hasBlocked = True
@@ -338,7 +339,7 @@ class Sudoku():
                               for ind in indices:
                                    row[ind].hasBlocked = False
                               if status: 
-                                   actions.append(f"Naked Triple: Cells {indices[0]+1},{indices[1]+1},{indices[2]+1} in row {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the row")
+                                   actions.append(f"Naked Triple: Cells {indices[0]+1},{indices[1]+1},{indices[2]+1} in row {i+1} can only be {sorted(self.strToIntList(triplet))}, removing those candidates from the row")
           for i in range(0,9):
                colP = self.getPossibles(MODE.COLUMN,i)
                triplets = {}
@@ -353,13 +354,13 @@ class Sudoku():
                #add any cells that are a subset of a naked triple, ex 1,5 and 5,9 are subsets of triple 1,5,9
                for k in range(0,9):
                     for key in triplets.keys():
-                         if not -1 in colP[k] and not k in triplets[key] and len(colP[k]) != 1 and self.listToStr(colP[k]) in key:
+                         if not -1 in colP[k] and not k in triplets[key] and len(colP[k]) == 2 and set(colP[k]) <= set(self.strToIntList(key)):
                               triplets[key].append(k)
                #block
                col = self.getCol(i)
                for triplet, indices in triplets.items():
                          if len(indices) == 3:
-                              
+                              indices = sorted(indices)
                               for ind in indices:
                                    col[ind].hasBlocked = True
 
@@ -382,12 +383,13 @@ class Sudoku():
                #add any cells that are a subset of a naked triple, ex 1,5 and 5,9 are subsets of triple 1,5,9
                for k in range(0,9):
                     for key in triplets.keys():
-                         if not -1 in boxP[k] and not k in triplets[key] and len(boxP[k]) != 1 and self.listToStr(boxP[k]) in key:
+                         if not -1 in boxP[k] and not k in triplets[key] and len(boxP[k]) == 2 and set(boxP[k]) <= set(self.strToIntList(key)):
                               triplets[key].append(k)
                #block
                box = self.getBox(i)
                for triplet, indices in triplets.items():
                          if len(indices) == 3:
+                              indices = sorted(indices)
                               for ind in indices:
                                    box[ind].hasBlocked = True
                               i1,j1 = self.getBoxPos(i)
@@ -408,20 +410,20 @@ class Sudoku():
                          cells = self.listToStr(rowP[j])
                          triples[cells] = [j]
                          for k in range(1,10):
-                              if  k != j and self.listToStr(rowP[k]) in cells:
+                              if  k != j and set(rowP[k]) <= set(self.strToIntList(cells)):
                                    triples[cells].append(k)
 
                for indices, triplet in triples.items():
                     if len(triplet) == 3:
                               row = self.getRow(i)
-                              inds = self.strToIntList(indices)
+                              inds = sorted(self.strToIntList(indices))
                               changed = False
                               for ind in inds:
                                    if not set(row[ind].possible) <= set(triplet):
                                         row[ind].possible = list(set(row[ind].possible) & set(triplet))
                                         changed = True
                               if changed:
-                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in row {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the row")
+                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in row {i+1} can only be {sorted(self.strToIntList(triplet))}, removing those candidates from the row")
           for i in range(0,9):
                colP = self.getPossiblesDict(i,MODE.COLUMN,2,3)
                #{"468":[1,5,7]}
@@ -431,20 +433,20 @@ class Sudoku():
                          cells = self.listToStr(colP[j])
                          triples[cells] = [j]
                          for k in range(1,10):
-                              if k != j and self.listToStr(colP[k]) in cells:
+                              if k != j and set(colP[k]) <= set(self.strToIntList(cells)):
                                    triples[cells].append(k)
 
                for indices, triplet in triples.items():
                     if len(triplet) == 3:
                               col = self.getCol(i)
-                              inds = self.strToIntList(indices)
+                              inds = sorted(self.strToIntList(indices))
                               changed = False
                               for ind in inds:
                                    if not set(col[ind].possible) <= set(triplet):
                                         col[ind].possible = list(set(col[ind].possible) & set(triplet))
                                         changed = True
                               if changed:
-                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in column {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the column")
+                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in column {i+1} can only be {sorted(self.strToIntList(triplet))}, removing those candidates from the column")
           for i in range(0,9):
                boxP = self.getPossiblesDict(i,MODE.BOX,2,3)
                #{"468":[1,5,7]}
@@ -454,13 +456,13 @@ class Sudoku():
                          cells = self.listToStr(boxP[j])
                          triples[cells] = [j]
                          for k in range(1,10):
-                              if k != j and self.listToStr(boxP[k]) in cells:
+                              if k != j and set(boxP[k]) <= set(self.strToIntList(cells)):
                                    triples[cells].append(k)
 
                for indices, triplet in triples.items():
                     if len(triplet) == 3:
                               box = self.getBox(i)
-                              inds = self.strToIntList(indices)
+                              inds = sorted(self.strToIntList(indices))
                               triplet = sorted(triplet)
                               changed = False
                               for ind in inds:
@@ -468,9 +470,56 @@ class Sudoku():
                                         box[ind].possible = list(set(box[ind].possible) & set(triplet))
                                         changed = True
                               if changed:
-                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in box {i+1} can only be {self.strToIntList(triplet)}, removing those candidates from the box")     
+                                   actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in box {i+1} can only be {sorted(self.strToIntList(triplet))}, removing those candidates from the box")     
 
           return actions
+     def xWing(self):
+          actions = []
+          # by row,col, get cells that only occur twice
+          # by candidate, compare indexes, if they match, block opposite using index (j = 5,8, block cols 5,8)
+          totalRowP = []
+          totalColP = []
+          # [{1:[3,5]2:[-1]...}]
+          for i in range(0,9):
+               totalRowP.append(self.getPossiblesDict(i,MODE.ROW,2,2))
+               totalColP.append(self.getPossiblesDict(i,MODE.COLUMN,2,2))
+          for i in range(0,9):
+               current = totalRowP[i]
+               for j in range(1,10):
+                    if current[j][0] != -1:
+                         for k in range(i,9):
+                              #don't compare to self
+                              if k != i:
+                                   if current[j] == totalRowP[k][j]:
+                                        status = False
+                                        for ind in current[j]:
+                                             self.cells[i][ind].hasBlocked = True
+                                             self.cells[k][ind].hasBlocked = True
+                                             status = self.block(0,ind,j,MODE.COLUMN) or status 
+                                             self.cells[i][ind].hasBlocked = False
+                                             self.cells[k][ind].hasBlocked = False
+                                        if status:
+                                             actions.append(f"X Wing: Cells {current[j][0]+1},{current[j][1]+1} are the only cells that contain {j} in rows {i+1},{k+1}, and are in the same columns, removing the possibility of {j} in those columns.")
+          for i in range(0,9):
+               current = totalColP[i]
+               for j in range(1,10):
+                    if current[j][0] != -1:
+                         for k in range(i,9):
+                              #don't compare to self
+                              if k != i:
+                                   if current[j] == totalColP[k][j]:
+                                        status = False
+                                        for ind in current[j]:
+                                             self.cells[ind][i].hasBlocked = True
+                                             self.cells[ind][k].hasBlocked = True
+                                             status = self.block(ind,0,j,MODE.ROW) or status
+                                             self.cells[ind][i].hasBlocked = False
+                                             self.cells[ind][k].hasBlocked = False
+                                        if status:
+                                             actions.append(f"X Wing: Cells {current[j][0]+1},{current[j][1]+1} are the only cells that contain {j} in columns {i+1},{k+1}, and are in the same rows, removing the possibility of {j} in those rows.")
+          return actions
+
+          
      def blockAll(self) -> list[str]:
           """Iterates over board, calling self.block() on any cells that haven't blocked yet and have a value"""
           actions = []
@@ -488,6 +537,7 @@ class Sudoku():
           return actions         
      def block(self, i, j, num, mode:MODE) -> bool:
           """Removes the input num from the list of possible numbers in the column, row, and box of the input coordinate"""
+          
           changed = False
           match mode:
                case MODE.ROW:
@@ -508,7 +558,7 @@ class Sudoku():
                          if not b[k].hasBlocked and num in b[k].possible:
                               b[k].possible.remove(num)
                               changed = True
-
+          #print(f"Blocking {num} at {i,j}, in {mode.name}, changed: {changed}")
           return changed
      def blockMultiple(self, i, j, nums:list[int], mode:MODE) -> bool:
           """Removes the input nums from the list of possible numbers in the column, row, and box of the input coordinate"""
