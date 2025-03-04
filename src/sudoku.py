@@ -53,6 +53,8 @@ class Sudoku():
                actions.extend(self.naive())
                actions.extend(self.nakedTriples())
                actions.extend(self.hiddenTriples())
+               actions.extend(self.xWing())
+               actions.extend(self.chuteRemotePairs())
                changed = size != len(actions)
                if not changed:
                     limit-=1
@@ -518,6 +520,182 @@ class Sudoku():
                                         if status:
                                              actions.append(f"X Wing: Cells {current[j][0]+1},{current[j][1]+1} are the only cells that contain {j} in columns {i+1},{k+1}, and are in the same rows, removing the possibility of {j} in those rows.")
           return actions
+     def chuteRemotePairs(self):
+          #look by chute, get cells with only 2 candidates
+          # compare cells in chute, make sure not naked pair (not in same col,row,box)
+          #  get cells that can't see the pair in the remaining box of chute
+          #   if they have only one of the candidates in the pair, eliminate that candidate from cells that both of the pair can see
+          actions = []
+          #chute
+          for i in range(0,3):
+               pairs = {}
+               #row
+               for j in range(0,3):
+                    pairs[j] = {}
+                    rowP = self.getPossibles(MODE.ROW,i*3+j)
+                    #cell
+                    for k in range(0,9):
+                         if len(rowP[k]) == 2:
+                              #pairs={0:{"47":[7],"68":[2]},1:{"78":[1]}}
+                              if not self.listToStr(sorted(rowP[k])) in pairs[j]: 
+                                   pairs[j][self.listToStr(sorted(rowP[k]))] = []
+                              pairs[j][self.listToStr(sorted(rowP[k]))].append(k) 
+                              
+               #find any pairs that occur in 2 rows in the chute
+               matches = {}
+               for j in range(0,2):
+                    rowPair = pairs[j]
+                    for pair, indices in rowPair.items():
+                         for index in indices:
+                              for k in range(j+1,3):
+                                   nextRowPair = pairs[k]
+                                   if pair in nextRowPair:
+                                             for nextIndex in nextRowPair[pair]:
+                                                  # matching pair in different rows, not in same box
+                                                  if math.floor(index / 3) != math.floor(nextIndex/3):
+                                                       if not pair in matches:
+                                                            matches[pair] = []
+                                                       matches[pair].append(((j,index), (k,nextIndex)))
+
+               #{"47":[((0,7)(1,1)),((1,3),(2,9))]}
+               for match, pairCoords in matches.items():
+                    for coords in pairCoords:
+                         #row index relative to chute and therefore also relative to box
+                         unoccupiedRowRelativeIndex = list(set([0,1,2]) - set([coords[0][0], coords[1][0]]))[0]
+                         #absolute box index
+                         unoccupiedBoxIndex =  i*3+list(set([0,1,2]) - set([math.floor(coords[0][1]/3), math.floor(coords[1][1]/3)]))[0]
+
+                         cells = self.getBox(unoccupiedBoxIndex)[unoccupiedRowRelativeIndex * 3:unoccupiedRowRelativeIndex * 3 + 3]
+                         foundFirst = False
+                         foundSecond = False
+                         candidate1 = self.strToIntList(match)[0]
+                         candidate2 = self.strToIntList(match)[1]
+                         for cell in cells:
+                              if candidate1 in cell.possible or candidate1 == cell.num:
+                                   foundFirst = True
+                              if candidate2 in cell.possible or candidate2 == cell.num:
+                                   foundSecond = True
+                         if foundFirst ^ foundSecond:
+                              firstSeen = self.getVisible(i*3+coords[0][0],coords[0][1])
+                              secondSeen = self.getVisible(i*3+coords[1][0],coords[1][1])
+                              intersection = list(set(firstSeen) & set(secondSeen))
+                              changed = False
+                              if foundFirst:
+                                   for coord in intersection:
+                                        if candidate1 in self.cells[coord[0]][coord[1]].possible:
+                                             self.cells[coord[0]][coord[1]].possible.remove(candidate1)
+                                             changed = True
+                                   if changed:
+                                        actions.append(f"Chute Remote Pair: Cells ({coords[0][0]+i*3+1},{coords[0][1]+1}),({coords[1][0]+i*3+1},{coords[1][1]+1}) form a remote pair, and at least one of 3 cells they don't see in their chute contain {candidate1}, removing {candidate1} from the cells that both cells can see.")
+
+                              else:
+                                   for coord in intersection:
+                                        if candidate2 in self.cells[coord[0]][coord[1]].possible:
+                                             self.cells[coord[0]][coord[1]].possible.remove(candidate2)
+                                             changed = True
+                                   if changed:
+                                        actions.append(f"Chute Remote Pair: Cells ({coords[0][0]+i*3+1},{coords[0][1]+1}),({coords[1][0]+i*3+1},{coords[1][1]+1}) form a remote pair, and at least one of 3 cells they don't see in their chute contain {candidate2}, removing {candidate2} from the cells that both cells can see.")
+                         #double elimination
+                         elif not foundFirst and not foundSecond:
+                              firstSeen = self.getVisible(i*3+coords[0][0],coords[0][1])
+                              secondSeen = self.getVisible(i*3+coords[1][0],coords[1][1])
+                              intersection = list(set(firstSeen) & set(secondSeen))
+                              changed = False
+                              for coord in intersection:
+                                   if candidate1 in self.cells[coord[0]][coord[1]].possible:
+                                        self.cells[coord[0]][coord[1]].possible.remove(candidate1)
+                                        changed = True
+                                   if candidate2 in self.cells[coord[0]][coord[1]].possible:
+                                        self.cells[coord[0]][coord[1]].possible.remove(candidate2)
+                                        changed = True
+                              if changed:
+                                   actions.append(f"Chute Remote Pair Double Elimination: Cells ({coords[0][0]+i*3+1},{coords[0][1]+1}),({coords[1][0]+i*3+1},{coords[1][1]+1}) form a remote pair, and none of 3 cells they don't see in their chute contain either {candidate1} or {candidate2}, removing {candidate1} and {candidate2} from the cells that both cells can see.")
+          #chute
+          for i in range(0,3):
+               pairs = {}
+               #col
+               for j in range(0,3):
+                    pairs[j] = {}
+                    colP = self.getPossibles(MODE.COLUMN,i*3+j)
+                    #cell
+                    for k in range(0,9):
+                         if len(colP[k]) == 2:
+                              if not self.listToStr(sorted(colP[k])) in pairs[j]: 
+                                   pairs[j][self.listToStr(sorted(colP[k]))] = []
+                              pairs[j][self.listToStr(sorted(colP[k]))].append(k) 
+               #find any pairs that occur in 2 rows in the chute
+               matches = {}
+               for j in range(0,2):
+                    colPair = pairs[j]
+                    for pair, indices in colPair.items():
+                         for index in indices:
+                              for k in range(j+1,3):
+                                   nextColPair = pairs[k]
+                                   if pair in nextColPair:
+                                             for nextIndex in nextColPair[pair]:
+                                                  # matching pair in different cols, not in same box
+                                                  if math.floor(index / 3) != math.floor(nextIndex/3):
+                                                       if not pair in matches:
+                                                            matches[pair] = []
+                                                       matches[pair].append(((index,j), (nextIndex,k)))
+              
+               #{"28":((5,1)(2,2))}
+               for match, pairCoords in matches.items():
+                    for coords in pairCoords:
+                         #col index relative to chute and therefore also relative to box
+                         unoccupiedColRelativeIndex = list(set([0,1,2]) - set([coords[0][1], coords[1][1]]))[0]
+                         #absolute box index
+                         unoccupiedBoxIndex = i + list(set([0,1,2]) - set([math.floor(coords[0][0]/3), math.floor(coords[1][0]/3)]))[0] * 3
+
+                         cells = self.getBox(unoccupiedBoxIndex)[unoccupiedColRelativeIndex:unoccupiedColRelativeIndex+7:3]
+                         foundFirst = False
+                         foundSecond = False
+                         candidate1 = self.strToIntList(match)[0]
+                         candidate2 = self.strToIntList(match)[1]
+                         for cell in cells:
+                              if candidate1 in cell.possible or candidate1 == cell.num:
+                                   foundFirst = True
+                              if candidate2 in cell.possible or candidate2 == cell.num:
+                                   foundSecond = True
+                         if foundFirst ^ foundSecond:
+                              firstSeen = self.getVisible(coords[0][0],i*3+coords[0][1])
+                              secondSeen = self.getVisible(coords[1][0],i*3+coords[1][1])
+                              intersection = list(set(firstSeen) & set(secondSeen))
+                              changed = False
+                              if foundFirst:
+                                   for coord in intersection:
+                                        if candidate1 in self.cells[coord[0]][coord[1]].possible:
+                                             self.cells[coord[0]][coord[1]].possible.remove(candidate1)
+                                             changed = True
+                                   if changed:
+                                        actions.append(f"Chute Remote Pair: Cells ({coords[0][0]+1},{coords[0][1]+i*3+1}),({coords[1][0]+1},{coords[1][1]+i*3+1}) form a remote pair, and at least one of 3 cells they don't see in their chute contain {candidate1}, removing {candidate1} from the cells that both cells can see.")
+
+                              else:
+                                   for coord in intersection:
+                                        if candidate2 in self.cells[coord[0]][coord[1]].possible:
+                                             self.cells[coord[0]][coord[1]].possible.remove(candidate2)
+                                             changed = True
+                                   if changed:
+                                        actions.append(f"Chute Remote Pair: Cells ({coords[0][0]+1},{coords[0][1]+i*3+1}),({coords[1][0]+1},{coords[1][1]+i*3+1}) form a remote pair, and at least one of 3 cells they don't see in their chute contain {candidate2}, removing {candidate2} from the cells that both cells can see.")
+                         #double elimination
+                         elif not foundFirst and not foundSecond:
+                              firstSeen = self.getVisible(coords[0][0],i*3+coords[0][1])
+                              secondSeen = self.getVisible(coords[1][0],i*3+coords[1][1])
+                              intersection = list(set(firstSeen) & set(secondSeen))
+                              changed = False
+                              for coord in intersection:
+                                   if candidate1 in self.cells[coord[0]][coord[1]].possible:
+                                        self.cells[coord[0]][coord[1]].possible.remove(candidate1)
+                                        changed = True
+                                   if candidate2 in self.cells[coord[0]][coord[1]].possible:
+                                        self.cells[coord[0]][coord[1]].possible.remove(candidate2)
+                                        changed = True
+                              if changed:
+                                   actions.append(f"Chute Remote Pair Double Elimination: Cells ({coords[0][0]+1},{coords[0][1]+i*3+1}),({coords[1][0]+1},{coords[1][1]+i*3+1}) form a remote pair, and none of 3 cells they don't see in their chute contain either {candidate1} or {candidate2}, removing {candidate1} and {candidate2} from the cells that both cells can see.")
+          
+          return actions
+               
+
 
           
      def blockAll(self) -> list[str]:
@@ -682,6 +860,24 @@ class Sudoku():
                if len(candidates) == candidateN and len(indices) == indexN:
                     ret.append((candidates,list(indices)))
           return ret     
+     def getVisible(self, i:int, j:int) -> list[tuple[int,int]]:
+          """Returns a list of coordinates of cells that can be seen by the cell at i,j"""
+          ret = []
+          #row
+          for k in range(0,9):
+               if k != j:
+                    ret.append((i,k))
+          #col
+          for k in range(0,9):
+               if k != i:
+                    ret.append((k,j))
+          boxIndex = self.getBoxIndexFromPos(i,j)
+          #box
+          for k in range(0,9):
+               i1,j1 = self.boxRelativeToAbsoluteCoords(boxIndex,k)
+               if i != i1 and j != j1:
+                    ret.append((i1,j1))
+          return ret
      def listToStr(self, list:list[int]) -> str:
           ret = ""
           for l in list:
