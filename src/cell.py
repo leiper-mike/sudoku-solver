@@ -8,7 +8,7 @@ class LineType(Enum):
      NONE = 5
 
 class Cell():
-     def __init__(self, p1:tuple, p2:tuple, color:str = "black", LineTypes:list[LineType] = [LineType.NONE]):
+     def __init__(self, i:int, j:int, p1:tuple, p2:tuple, color:str = "black", LineTypes:list[LineType] = [LineType.NONE]):
           self.x1 = p1[0]
           self.y1 = p1[1]
           self.x2 = p2[0]
@@ -20,6 +20,8 @@ class Cell():
           self.hasBlocked = False
           self.possible = [1,2,3,4,5,6,7,8,9]
           self.textIDs = {"main":None,1:None,2:None,3:None,4:None,5:None,6:None,7:None,8:None,9:None}
+          self.i = i
+          self.j = j
      def draw(self, canvas):
           if LineType.TOP in self.lineTypes:
                canvas.create_line(self.x1,self.y1,self.x2,self.y1,fill=self.color,width=4)

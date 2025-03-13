@@ -55,6 +55,7 @@ class Sudoku():
                actions.extend(self.hiddenTriples())
                actions.extend(self.xWing())
                actions.extend(self.chuteRemotePairs())
+               actions.extend(self.yWing())
                changed = size != len(actions)
                if not changed:
                     limit-=1
@@ -475,7 +476,7 @@ class Sudoku():
                                    actions.append(f"Hidden Triple: Cells {inds[0]+1},{inds[1]+1},{inds[2]+1} in box {i+1} can only be {sorted(self.strToIntList(triplet))}, removing those candidates from the box")     
 
           return actions
-     def xWing(self):
+     def xWing(self)-> list[str]:
           actions = []
           # by row,col, get cells that only occur twice
           # by candidate, compare indexes, if they match, block opposite using index (j = 5,8, block cols 5,8)
@@ -520,7 +521,7 @@ class Sudoku():
                                         if status:
                                              actions.append(f"X Wing: Cells {current[j][0]+1},{current[j][1]+1} are the only cells that contain {j} in columns {i+1},{k+1}, and are in the same rows, removing the possibility of {j} in those rows.")
           return actions
-     def chuteRemotePairs(self):
+     def chuteRemotePairs(self)-> list[str]:
           #look by chute, get cells with only 2 candidates
           # compare cells in chute, make sure not naked pair (not in same col,row,box)
           #  get cells that can't see the pair in the remaining box of chute
@@ -694,7 +695,83 @@ class Sudoku():
                                    actions.append(f"Chute Remote Pair Double Elimination: Cells ({coords[0][0]+1},{coords[0][1]+i*3+1}),({coords[1][0]+1},{coords[1][1]+i*3+1}) form a remote pair, and none of 3 cells they don't see in their chute contain either {candidate1} or {candidate2}, removing {candidate1} and {candidate2} from the cells that both cells can see.")
           
           return actions
-               
+     def yWing(self) -> list[str]:
+          actions = []
+          for i in range(0,9):
+               for j in range(0,9):
+                    if len(self.cells[i][j].possible) == 2:
+                         abCell = self.cells[i][j]
+                         a = abCell.possible[0]
+                         b = abCell.possible[1]
+                         #cells that have only 2 candidates, share at most one candidate with, and are visible to ab cell
+                         visibleCoords = self.getVisible(i,j)
+                         possibleCells = list(filter(lambda c: len(c.possible) == 2 and ((a in c.possible) ^ (b in c.possible)),map(lambda c: self.cells[c[0]][c[1]], visibleCoords)))
+                         possibleCoords = list(map( lambda c2: (c2.i,c2.j),possibleCells))
+                         for cell in possibleCells:
+                              acCell = None
+                              bcCell = None
+                              if a in cell.possible:
+                                   acCell = cell
+                                   c = list(set(acCell.possible) - set(abCell.possible))[0]
+                                   acVisibleCoords = self.getVisible(acCell.i,acCell.j)
+                                   bcPossibleCoords = set(possibleCoords) - set(acVisibleCoords)
+                                   # cells that are visible to abCell but not visible to acCell, that have b and c as candidates
+                                   bcPossibleCells = list(filter(lambda c1: b in c1.possible and c in c1.possible, map(lambda coord: self.cells[coord[0]][coord[1]],bcPossibleCoords)))
+                                   for bc in bcPossibleCells:
+                                        bcCell = bc
+                                        status = False
+                                        affected = list(set(self.getVisible(bcCell.i,bcCell.j)) & set(acVisibleCoords))
+                                        removed = [] 
+                                        for coord in affected:
+                                             if c in self.cells[coord[0]][coord[1]].possible:
+                                                  self.cells[coord[0]][coord[1]].possible.remove(c)
+                                                  removed.append((coord[0]+1,coord[1]+1))
+                                                  status = True
+                                        if status:
+                                             
+                                             actions.append(f"Y Wing: AB Cell at {i+1},{j+1} sees AC cell {acCell.i+1},{acCell.j+1} and BC cell {bcCell.i+1},{bcCell.j+1}, removing C ({c}) from cells that can be seen by both AC and BC cells: {removed}.")
+                              else:
+                                   bcCell = cell
+                                   c = list(set(bcCell.possible) - set(abCell.possible))[0]
+                                   bcVisibleCoords = self.getVisible(bcCell.i,bcCell.j)
+                                   acPossibleCoords = set(possibleCoords) - set(bcVisibleCoords)
+                                   # cells that are visible to abCell but not visible to acCell, that have b and c as candidates
+                                   acPossibleCells = list(filter(lambda c1: a in c1.possible and c in c1.possible, map(lambda coord: self.cells[coord[0]][coord[1]],acPossibleCoords)))
+                                   for ac in acPossibleCells:
+                                        acCell = ac
+                                        status = False
+                                        affected = list(set(self.getVisible(acCell.i,acCell.j)) & set(bcVisibleCoords)) 
+                                        removed = []
+                                        for coord in affected:
+                                             if c in self.cells[coord[0]][coord[1]].possible:
+                                                  self.cells[coord[0]][coord[1]].possible.remove(c)
+                                                  removed.append((coord[0]+1,coord[1]+1))
+                                                  status = True
+                                        if status:
+                                             actions.append(f"Y Wing: AB Cell at {i+1},{j+1} sees AC cell {acCell.i+1},{acCell.j+1} and BC cell {bcCell.i+1},{bcCell.j+1}, removing C ({c}) from cells that can be seen by both AC and BC cells: {removed}.")
+          return actions
+                              
+
+
+
+                    
+
+     # def simpleColoring(self)-> list[str]:
+          # actions = []
+          # for i in range(0,9):
+          #      for j in range(0,9):
+          #           parentCell = self.cells[i][j]
+          #           if parentCell.num == -1:
+          #                parentCell.on = True
+          #                state = False
+          #                for candidate in parentCell.possible:
+          #                     visible = self.getVisible(i,j)
+          #                     for coord in visible:
+          #                          visibleCell = self.cells[coord[0]][coord[1]]
+          #                          if candidate in visibleCell.possible:
+          #                               candidate
+                              
+                                   
 
 
           

@@ -4,7 +4,6 @@ from sudoku import Sudoku, MODE
 
 class TestSudoku(unittest.TestCase):
      def testCheck(self):
-          cells = []
           solved = [
                [5,3,4,6,7,8,9,1,2],
                [6,7,2,1,9,5,3,4,8],
@@ -16,16 +15,11 @@ class TestSudoku(unittest.TestCase):
                [2,8,7,4,1,9,6,3,5],
                [3,4,5,2,8,6,1,7,9],
           ]
-          for i in range(0,9):
-               cells.append([])
-               for j in range(0,9):
-                    cells[i].append(Cell((0,0),(0,0)))
-                    cells[i][j].num = solved[i][j]
+          cells = cellsFromNums(solved)
           sudoku = Sudoku(cells)
           status = sudoku.check()
           self.assertTrue(status)
      def testCheckFail(self):
-          cells = []
           solved = [
                [5,3,4,6,8,7,9,1,2],
                [6,7,2,1,9,5,3,4,8],
@@ -37,16 +31,11 @@ class TestSudoku(unittest.TestCase):
                [2,8,7,4,1,9,6,3,5],
                [3,4,5,2,8,6,1,7,9],
           ]
-          for i in range(0,9):
-               cells.append([])
-               for j in range(0,9):
-                    cells[i].append(Cell((0,0),(0,0)))
-                    cells[i][j].num = solved[i][j]
+          cells = cellsFromNums(solved)
           sudoku = Sudoku(cells)
           status = sudoku.check()
           self.assertFalse(status)
      def testCheckEmpty(self):
-          cells = []
           solved = [
                [-1,-1,-1,-1,-1,-1,-1,-1,-1],
                [-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -58,11 +47,7 @@ class TestSudoku(unittest.TestCase):
                [-1,-1,-1,-1,-1,-1,-1,-1,-1],
                [-1,-1,-1,-1,-1,-1,-1,-1,-1],
           ]
-          for i in range(0,9):
-               cells.append([])
-               for j in range(0,9):
-                    cells[i].append(Cell((0,0),(0,0)))
-                    cells[i][j].num = solved[i][j]
+          cells = cellsFromNums(solved)
           sudoku = Sudoku(cells)
           status = sudoku.check()
           self.assertFalse(status)
@@ -679,6 +664,44 @@ class TestSudoku(unittest.TestCase):
           for i in range(0,9):
                for j in range(0,9):
                      self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+     def testYWing(self):
+          input = [
+               [[-1],[3,8],[1,3,6,8],[-1],[-1],[1,3,7,8],[5,7],[5,8],[5,6,8]],
+               [[4,7,8],[-1],[4,8],[-1],[-1],[7,8],[-1],[-1],[-1]],
+               [[1,3,6,7,8],[-1],[1,3,6,8],[1,8],[-1],[1,3,7,8],[4,7],[-1],[4,6,8]],
+               [[1,4,6,8],[-1],[1,4,5,6,8],[-1],[1,6],[4,8],[-1],[-1],[4,5,8]],
+               [[1,4,8],[4,8],[-1],[-1],[-1],[-1],[-1],[1,4,8],[-1]],
+               [[1,3,4,6,8],[-1],[1,3,4,5,6,8],[4,8],[1,6],[-1],[-1],[1,4,5,8],[4,5,8]],
+               [[4,8],[-1],[-1],[1,4,5],[-1],[1,4],[1,4,5,8],[-1],[-1]],
+               [[-1],[-1],[3,4,8],[3,4],[-1],[-1],[4,8],[-1],[-1]],
+               [[-1],[3,4],[-1],[1,3,4,5],[-1],[-1],[1,4,5],[1,4,5],[-1]],
+               ]
+          correct = [
+               [[-1],[3,8],[1,3,6,8],[-1],[-1],[1,3,7,8],[5,7],[5,8],[5,6,8]],
+               [[4,7],[-1],[4,8],[-1],[-1],[7,8],[-1],[-1],[-1]],
+               [[1,3,6,7],[-1],[1,3,6,8],[1,8],[-1],[1,3,7,8],[4,7],[-1],[4,6,8]],
+               [[1,4,6,8],[-1],[1,4,5,6],[-1],[1,6],[4,8],[-1],[-1],[4,5,8]],
+               [[1,4,8],[4,8],[-1],[-1],[-1],[-1],[-1],[1,4,8],[-1]],
+               [[1,3,4,6,8],[-1],[1,3,4,5,6],[4,8],[1,6],[-1],[-1],[1,4,5,8],[4,5,8]],
+               [[4,8],[-1],[-1],[1,5],[-1],[1],[1,4,5,8],[-1],[-1]],
+               [[-1],[-1],[3,8],[3,4],[-1],[-1],[4,8],[-1],[-1]],
+               [[-1],[3,4],[-1],[1,3,4,5],[-1],[-1],[1,5],[1,5],[-1]],
+               ]
+          correctStatus = [
+               "Y Wing: AB Cell at 1,2 sees AC cell 9,2 and BC cell 2,3, removing C (4) from cells that can be seen by both AC and BC cells: [(8, 3)].",
+               "Y Wing: AB Cell at 8,3 sees AC cell 8,4 and BC cell 7,1, removing C (4) from cells that can be seen by both AC and BC cells: [(7, 6), (7, 4)].",
+               "Y Wing: AB Cell at 8,3 sees AC cell 9,2 and BC cell 8,7, removing C (4) from cells that can be seen by both AC and BC cells: [(9, 8), (9, 7)].",
+               "Y Wing: AB Cell at 8,4 sees AC cell 8,3 and BC cell 6,4, removing C (8) from cells that can be seen by both AC and BC cells: [(6, 3)].",
+               "Y Wing: AB Cell at 9,2 sees AC cell 1,2 and BC cell 7,1, removing C (8) from cells that can be seen by both AC and BC cells: [(3, 1), (2, 1)].",
+               "Y Wing: AB Cell at 9,2 sees AC cell 8,3 and BC cell 5,2, removing C (8) from cells that can be seen by both AC and BC cells: [(4, 3)]."
+          ]
+          cells = cellPossibleFromNums(input)
+          sudoku = Sudoku(cells)
+          status = sudoku.yWing()
+          self.assertListEqual(status,correctStatus)
+          for i in range(0,9):
+               for j in range(0,9):
+                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
      def testEmptyNaive(self):
           input = [
                [-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -752,7 +775,7 @@ class TestSudoku(unittest.TestCase):
           for i in range(0,9):
                cells.append([])
                for j in range(0,9):
-                    cells[i].append(Cell((0,0),(0,0)))
+                    cells[i].append(Cell(0,0(0,0),(0,0)))
           sudoku = Sudoku(cells)
           pos = sudoku.getBoxPos(0)
           self.assertTupleEqual(pos,(0,0))
@@ -870,6 +893,7 @@ class TestSudoku(unittest.TestCase):
           possibles = sudoku.getPossibles(MODE.BOX,0)
           self.assertListEqual(possibles,correct)
           self.assertTrue(status)
+
           
 
 def cellsFromNums(nums:list[list[int]]) -> list[list[Cell]]:
@@ -877,7 +901,7 @@ def cellsFromNums(nums:list[list[int]]) -> list[list[Cell]]:
      for i in range(0,9):
           cells.append([])
           for j in range(0,9):
-               cells[i].append(Cell((0,0),(0,0)))
+               cells[i].append(Cell(i,j,(0,0),(0,0)))
                cells[i][j].setNum(nums[i][j])
      return cells
 def cellPossibleFromNums(nums:list[list[list[int]]]) -> list[list[Cell]]:
@@ -885,7 +909,7 @@ def cellPossibleFromNums(nums:list[list[list[int]]]) -> list[list[Cell]]:
      for i in range(0,9):
           cells.append([])
           for j in range(0,9):
-               cells[i].append(Cell((0,0),(0,0)))
+               cells[i].append(Cell(i,j,(0,0),(0,0)))
                cells[i][j].possible = nums[i][j]
      return cells
 if __name__ == "__main__":

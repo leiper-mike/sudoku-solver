@@ -42,7 +42,7 @@ class Board(Canvas):
                     x1 = self.xOffset + (self.cellSizeX * j)
                     x2 = x1+self.cellSizeX
                     y2 = y1+self.cellSizeY
-                    cell = Cell((x1,y1),(x2,y2))
+                    cell = Cell(i,j,(x1,y1),(x2,y2))
                     lineTypes = []
                     #makes lines thicker to delineate boxes and edge of board
                     # top line
