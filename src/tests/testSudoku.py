@@ -1,6 +1,6 @@
 import unittest
-from cell import Cell
-from sudoku import Sudoku, MODE
+from src.cell import Cell
+from src.sudoku import Sudoku, MODE
 
 class TestSudoku(unittest.TestCase):
      def testCheck(self):
@@ -160,7 +160,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status, correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
           
      def testHiddenPairs(self):
           input = [
@@ -195,7 +195,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status, correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testNakedTriplePure(self):
           input = [
                [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
@@ -228,7 +228,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testNakedTripleSubset(self):
           input = [
                [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
@@ -261,7 +261,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testHiddenTriplePure(self):
           input = [
                [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
@@ -294,7 +294,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
 
      def testHiddenTripleSubset(self):
           input = [
@@ -328,7 +328,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testXWingRow(self):
           input = [
                [[-1],[3,7,8],[3,7],[2,3,4,7,8],[2,7,8],[2,3,4,7,8],[-1],[-1],[-1]],
@@ -361,7 +361,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testXWingCol(self):
           input = [
                [[1,3,5,8],[2,3,5],[1,2,3],[3,5,6],[6,7,8],[3,5,6,7,8],[7,6],[-1],[-1]],
@@ -394,7 +394,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testChuteRemotePairsRow(self):
           input = [
                [[1,4,7],[-1],[1,7,8],[-1],[4,7,8],[-1],[-1],[4,7],[-1]],
@@ -441,7 +441,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testChuteRemotePairsCols(self):
           input = [
                [[1,7],[-1],[1,7,8],[-1],[4,7,8],[-1],[-1],[4,7],[-1]],
@@ -488,7 +488,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testChuteRemotePairsNegative(self):
           input = [
                [[1,7],[-1],[1,7,8],[-1],[4,7,8],[-1],[-1],[4,7],[-1]],
@@ -533,7 +533,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testChuteRemotePairsDoubleElimRow(self):
           input = [
                [[1,2,4,5,7],[1,5],[1,2,4,5,7],[-1],[-1],[-1],[-1],[2,5],[4,7]],
@@ -580,7 +580,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testChuteRemotePairsDoubleElimCols(self):
           input = [
                [[1,7],[-1],[1,7,8],[-1],[4,7,8],[-1],[-1],[4,7],[-1]],
@@ -627,7 +627,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testVirtualSingle(self):
           input = [
                [[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1],[-1]],
@@ -663,7 +663,7 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testYWing(self):
           input = [
                [[-1],[3,8],[1,3,6,8],[-1],[-1],[1,3,7,8],[5,7],[5,8],[5,6,8]],
@@ -701,7 +701,40 @@ class TestSudoku(unittest.TestCase):
           self.assertListEqual(status,correctStatus)
           for i in range(0,9):
                for j in range(0,9):
-                     self.assertEqual(sudoku.cells[i][j].possible, correct[i][j], msg=f"i:{i},j{j}")
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
+     def testXYZWing(self):
+          input = [
+               [[3,8],[-1],[-1],[4,6],[4,8],[-1],[-1],[-1],[4,3,6]],
+               [[-1],[1,3,4],[1,4,6,7],[-1],[4,7],[6,7,9],[3,4,6],[1,9],[-1]],
+               [[1,4,6],[1,4,8],[1,4,6,7],[4,5,6,9],[-1],[5,6,7,8,9],[-1],[1,9],[4,6]],
+               [[3,8],[-1],[-1],[1,3],[1,2,8],[-1],[-1],[-1],[1,2]],
+               [[-1],[3,8],[1,4],[1,3,9],[-1],[8,9],[1,4,8],[-1],[-1]],
+               [[1,4],[-1],[-1],[-1],[1,2,5],[2,5,8],[1,4,8],[-1],[1,2,4]],
+               [[1,4,6],[1,4,5],[-1],[1,4,5,6],[-1],[5,6,7],[1,3,5,6],[-1],[1,3,6,7]],
+               [[-1],[1,2,4,5],[1,4,6],[1,4,5,6],[1,2,4,5],[-1],[1,5,6],[-1],[-1]],
+               [[-1],[1,2,5],[-1],[-1],[1,2,5,7],[2,5,6,7],[1,5,6],[-1],[1,6,7]],
+               ]
+          correct = [
+               [[3,8],[-1],[-1],[4,6],[4,8],[-1],[-1],[-1],[4,3,6]],
+               [[-1],[1,3,4],[1,4,6,7],[-1],[4,7],[6,7,9],[3,4,6],[1,9],[-1]],
+               [[1,4,6],[1,4,8],[1,4,6,7],[4,5,6,9],[-1],[5,6,7,8,9],[-1],[1,9],[4,6]],
+               [[3,8],[-1],[-1],[1,3],[1,2,8],[-1],[-1],[-1],[1,2]],
+               [[-1],[3,8],[1,4],[1,3,9],[-1],[8,9],[1,4,8],[-1],[-1]],
+               [[1,4],[-1],[-1],[-1],[1,2,5],[2,5,8],[4,8],[-1],[1,2,4]],
+               [[1,4,6],[1,4,5],[-1],[1,4,5,6],[-1],[5,6,7],[1,3,5,6],[-1],[1,3,6,7]],
+               [[-1],[1,2,4,5],[1,4,6],[1,4,5,6],[1,2,4,5],[-1],[1,5,6],[-1],[-1]],
+               [[-1],[1,2,5],[-1],[-1],[1,2,5,7],[2,5,6,7],[1,5,6],[-1],[1,6,7]],
+               ]
+          correctStatus = [
+               "XYZ Wing: Hinge cell at (6,9) and wing cells at (6,1),(4,9), removing Z (1) from cells that can be seen by all 3 cells: [(6, 7)]"
+          ]
+          cells = cellPossibleFromNums(input)
+          sudoku = Sudoku(cells)
+          status = sudoku.xyzWing()
+          self.assertListEqual(status,correctStatus)
+          for i in range(0,9):
+               for j in range(0,9):
+                     self.assertEqual(sudoku.cells[i][j].candidates, correct[i][j], msg=f"i:{i},j{j}")
      def testEmptyNaive(self):
           input = [
                [-1,-1,-1,-1,-1,-1,-1,-1,-1],
@@ -721,7 +754,7 @@ class TestSudoku(unittest.TestCase):
           for i in range(0,9):
                for j in range(0,9):
                     self.assertEqual(sudoku.cells[i][j].num, -1)
-                    self.assertEqual(sudoku.cells[i][j].possible, [1,2,3,4,5,6,7,8,9])
+                    self.assertEqual(sudoku.cells[i][j].candidates, [1,2,3,4,5,6,7,8,9])
      def testGetCol(self):
           nums = [
                [5,3,4,6,8,7,9,1,2],
@@ -775,7 +808,7 @@ class TestSudoku(unittest.TestCase):
           for i in range(0,9):
                cells.append([])
                for j in range(0,9):
-                    cells[i].append(Cell(0,0(0,0),(0,0)))
+                    cells[i].append(Cell(0,0,(0,0),(0,0)))
           sudoku = Sudoku(cells)
           pos = sudoku.getBoxPos(0)
           self.assertTupleEqual(pos,(0,0))
@@ -827,7 +860,7 @@ class TestSudoku(unittest.TestCase):
           status = sudoku.blockAll()
           self.assertTrue(status)
 
-          possibles = sudoku.getPossibles(MODE.ALL)
+          possibles = sudoku.getCandidates(MODE.ALL)
           self.assertListEqual(possibles,correct)
           
      def testBlockRow(self):
@@ -846,7 +879,7 @@ class TestSudoku(unittest.TestCase):
           cells = cellsFromNums(nums)
           sudoku = Sudoku(cells)
           status = sudoku.block(0,0,3,MODE.ROW)
-          possibles = sudoku.getPossibles(MODE.ROW,0)
+          possibles = sudoku.getCandidates(MODE.ROW,0)
           self.assertListEqual(possibles,correct)
           self.assertTrue(status)
      def testBlockCol(self):
@@ -868,7 +901,7 @@ class TestSudoku(unittest.TestCase):
           cells = cellsFromNums(nums)
           sudoku = Sudoku(cells)
           status = sudoku.block(0,2,3,MODE.COLUMN)
-          possibles = sudoku.getPossibles(MODE.COLUMN,2)
+          possibles = sudoku.getCandidates(MODE.COLUMN,2)
           self.assertListEqual(possibles,correct)
           self.assertTrue(status)
      def testBlockBox(self):
@@ -890,11 +923,84 @@ class TestSudoku(unittest.TestCase):
           cells = cellsFromNums(nums)
           sudoku = Sudoku(cells)
           status = sudoku.block(0,0,3,MODE.BOX)
-          possibles = sudoku.getPossibles(MODE.BOX,0)
+          possibles = sudoku.getCandidates(MODE.BOX,0)
           self.assertListEqual(possibles,correct)
           self.assertTrue(status)
-
+     def testGetVisible(self):
+          nums = [
+               [3,-1,5,1,-1,2,9,-1,-1],
+               [-1,-1,8,9,-1,3,5,-1,-1],
+               [-1,-1,-1,-1,8,-1,-1,-1,7],
+               [7,1,-1,-1,-1,-1,-1,2,5],
+               [-1,-1,6,-1,-1,-1,4,-1,-1],
+               [5,3,-1,-1,-1,-1,-1,7,1],
+               [8,-1,1,-1,5,-1,-1,-1,4],
+               [-1,-1,3,7,-1,1,2,-1,-1],
+               [-1,-1,7,8,-1,6,3,-1,-1]
+          ]
+          correct = [  
+                    (0,1),(0,2),(0,3),(0,4),(0,5),(0,6),(0,7),(0,8), 
+                    (1,0),(2,0),(3,0),(4,0),(5,0),(6,0),(7,0),(8,0), 
+                    (1,1),(1,2),(2,1),(2,2),
+                    ]
+          cells = cellsFromNums(nums)
+          sudoku = Sudoku(cells)
+          visible = sudoku.getVisible(0,0)
+          for i in range(0,len(correct)):
+               self.assertTupleEqual(correct[i],visible[i])
+     def testGetUnsolvedVisibleCells(self):
+          nums = [
+                    [[-1],[3,8],[1,3,6,8],[-1],[-1],[1,3,7,8],[5,7],[5,8],[5,6,8]],
+                    [[4,7,8],[-1],[4,8],[-1],[-1],[7,8],[-1],[-1],[-1]],
+                    [[1,3,6,7,8],[-1],[1,3,6,8],[1,8],[-1],[1,3,7,8],[4,7],[-1],[4,6,8]],
+                    [[1,4,6,8],[-1],[1,4,5,6,8],[-1],[1,6],[4,8],[-1],[-1],[4,5,8]],
+                    [[1,4,8],[4,8],[-1],[-1],[-1],[-1],[-1],[1,4,8],[-1]],
+                    [[1,3,4,6,8],[-1],[1,3,4,5,6,8],[4,8],[1,6],[-1],[-1],[1,4,5,8],[4,5,8]],
+                    [[4,8],[-1],[-1],[1,4,5],[-1],[1,4],[1,4,5,8],[-1],[-1]],
+                    [[-1],[-1],[3,4,8],[3,4],[-1],[-1],[4,8],[-1],[-1]],
+                    [[-1],[3,4],[-1],[1,3,4,5],[-1],[-1],[1,4,5],[1,4,5],[-1]]
+               ]
+          correct = createCells(
+               [
+                    (0,1,[3,8]), (0,2,[1,3,6,8]), (0,5,[1,3,7,8]), (0,6,[5,7]), (0,7,[5,8]), (0,8,[5,6,8]),
+                    (1,0,[4,7,8]), (2,0,[1,3,6,7,8]), (3,0,[1,4,6,8]), (4,0,[1,4,8]), (5,0,[1,3,4,6,8]), (6,0,[4,8]), 
+                    (1,2,[4,8]), (2,2,[1,3,6,8])
+               ]
+          )
           
+          cells = cellPossibleFromNums(nums)
+          sudoku = Sudoku(cells)
+          visible = sudoku.getUnsolvedVisibleCells(sudoku.cells[0][0])
+          self.assertEqual(len(correct), len(visible))
+          for i in range(0, len(correct)):
+               self.assertEqual(correct[i], visible[i])
+     def testGetUnsolvedVisibleCellsSpecificCandidateCount(self):
+          nums = [
+                    [[-1],[3,8],[1,3,6,8],[-1],[-1],[1,3,7,8],[5,7],[5,8],[5,6,8]],
+                    [[4,7,8],[-1],[4,8],[-1],[-1],[7,8],[-1],[-1],[-1]],
+                    [[1,3,6,7,8],[-1],[1,3,6,8],[1,8],[-1],[1,3,7,8],[4,7],[-1],[4,6,8]],
+                    [[1,4,6,8],[-1],[1,4,5,6,8],[-1],[1,6],[4,8],[-1],[-1],[4,5,8]],
+                    [[1,4,8],[4,8],[-1],[-1],[-1],[-1],[-1],[1,4,8],[-1]],
+                    [[1,3,4,6,8],[-1],[1,3,4,5,6,8],[4,8],[1,6],[-1],[-1],[1,4,5,8],[4,5,8]],
+                    [[4,8],[-1],[-1],[1,4,5],[-1],[1,4],[1,4,5,8],[-1],[-1]],
+                    [[-1],[-1],[3,4,8],[3,4],[-1],[-1],[4,8],[-1],[-1]],
+                    [[-1],[3,4],[-1],[1,3,4,5],[-1],[-1],[1,4,5],[1,4,5],[-1]]
+               ]
+          correct = createCells(
+               [
+                    (0,1,[3,8]), (0,6,[5,7]), (0,7,[5,8]), 
+                    (6,0,[4,8]), 
+                    (1,2,[4,8]), 
+               ]
+          )
+          
+          cells = cellPossibleFromNums(nums)
+          sudoku = Sudoku(cells)
+          visible = sudoku.getUnsolvedVisibleCellsCandidateCount(sudoku.cells[0][0], 2)
+          self.assertEquals(len(correct), len(visible))
+          for i in range(0, len(correct)):
+               self.assertEqual(correct[i], visible[i])
+
 
 def cellsFromNums(nums:list[list[int]]) -> list[list[Cell]]:
      cells = []
@@ -910,7 +1016,14 @@ def cellPossibleFromNums(nums:list[list[list[int]]]) -> list[list[Cell]]:
           cells.append([])
           for j in range(0,9):
                cells[i].append(Cell(i,j,(0,0),(0,0)))
-               cells[i][j].possible = nums[i][j]
+               cells[i][j].candidates = nums[i][j]
+     return cells
+def createCells(coordCandidates:list[tuple[int,int,list[int]]]) -> list[Cell]:
+     cells = []
+     for c in coordCandidates:
+          cell = Cell(c[0],c[1], (0,0),(0,0))
+          cell.candidates = c[2]
+          cells.append(cell)
      return cells
 if __name__ == "__main__":
      unittest.main()

@@ -77,11 +77,11 @@ class Board(Canvas):
      def setupSudoku(self) -> None:
           self.sudoku = Sudoku(self.cells)
 
-     def generatePossible(self):
+     def generateCandidates(self):
           self.sudoku.blockAll()
           for i in range(0,9):
                for j in range(0,9):
-                    self.sudoku.cells[i][j].drawPossible(self)
+                    self.sudoku.cells[i][j].drawCandidates(self)
      def updateNums(self) -> None:
           """Draws the number for each cell in the board object"""
           for i in range(0,9):
@@ -91,7 +91,7 @@ class Board(Canvas):
           for i in range(0,9):
                for j in range(0,9):
                     self.cells[i][j].delNum()
-                    self.cells[i][j].erasePossible(self)
+                    self.cells[i][j].eraseCandidates(self)
                     self.cells[i][j].eraseNum(self)
           self.sudoku.updateSudoku(self.cells)
      def test(self):

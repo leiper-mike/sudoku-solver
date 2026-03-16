@@ -1,5 +1,5 @@
 import unittest
-from cell import Cell
+from src.cell import Cell 
 class DummyCanvas():
      def __init__(self):
           return
@@ -16,12 +16,12 @@ class TestCell(unittest.TestCase):
           c1.setNum(5)
           c1.drawNum(self.canvas)
           self.assertEqual(c1.textIDs["main"], 1)
-          self.assertListEqual(c1.possible,[-1])
+          self.assertListEqual(c1.candidates,[-1])
      def testDrawNoNum(self):
           c2 = Cell(1,1,(1,1),(1,1))
           c2.drawNum(self.canvas)
           self.assertIsNone(c2.textIDs["main"])
-          self.assertListEqual(c2.possible,[1,2,3,4,5,6,7,8,9])
+          self.assertListEqual(c2.candidates,[1,2,3,4,5,6,7,8,9])
      def testEraseNum(self):
           c3 = Cell(2,2,(2,2),(2,2))
           c3.num = 5
@@ -32,12 +32,12 @@ class TestCell(unittest.TestCase):
      def testSetNum(self):
           c4 = Cell(3,3,(3,3),(3,3))
           c4.setNum(5)
-          self.assertListEqual(c4.possible,[-1])
+          self.assertListEqual(c4.candidates,[-1])
           self.assertEqual(c4.num,5)
      def testSetNegativeOneNum(self):
           c5 = Cell(4,4,(4,4),(4,4))
           c5.setNum(-1)
-          self.assertListEqual(c5.possible,[1,2,3,4,5,6,7,8,9])
+          self.assertListEqual(c5.candidates,[1,2,3,4,5,6,7,8,9])
           self.assertEqual(c5.num,-1)
 
 if __name__ == "__main__":
